@@ -26,13 +26,13 @@
     *::-webkit-scrollbar-thumb {background:var(--scroll); border:2px solid var(--surface); border-radius:999px;}
     *::-webkit-scrollbar-track {background:transparent;}
     html,body {margin:0; width:100%; height:100%; min-width:0;}
-    body {background:var(--canvas); color:var(--ink);}
+    body {background:var(--surface); color:var(--ink);}
     button,input,select,textarea {font:inherit;}
     button {cursor:pointer;}
     button:disabled {opacity:.38; cursor:not-allowed;}
     :is(button,input,select,textarea):focus-visible {outline:2px solid var(--accent); outline-offset:2px;}
-    .shell {display:flex; width:min(1510px,calc(100% - 44px)); height:calc(100dvh - 44px); min-height:440px;
-      margin:22px auto; overflow:hidden; background:var(--surface); border:1px solid var(--line); border-radius:19px; box-shadow:var(--shadow); position:relative;}
+    .shell {display:flex; width:100%; height:100dvh; min-height:0;
+      margin:0; overflow:hidden; background:var(--surface); border:0; border-radius:0; box-shadow:none; position:relative;}
     .sidebar {width:315px; flex:0 0 315px; min-width:0; height:100%; display:flex; flex-direction:column; border-right:1px solid var(--line); background:var(--surface-2); transition:width .22s ease,flex-basis .22s ease;}
     .shell.sidebar-hidden .sidebar {width:0; flex-basis:0; overflow:hidden; border:0;}
     .aside-head {height:68px; flex:0 0 68px; display:flex; align-items:center; gap:7px; padding:0 16px 0 22px; border-bottom:1px solid var(--line);}
@@ -61,10 +61,11 @@
     .tree-row:hover .row-more,.tree-row.selected .row-more,.row-more:focus-visible {opacity:1;}
     .row-more:hover {background:var(--surface); color:var(--ink);}
     .folder-drop {outline:1px dashed var(--accent); outline-offset:-1px; background:var(--selected)!important;}
+    .workspace-trigger.root-drop,.tree.root-drop {outline:2px dashed var(--accent); outline-offset:-3px; background:var(--selected); border-radius:8px;}
+    .workspace-trigger.root-drop .workspace-label::after {content:' · в корень'; font-size:11px; color:var(--accent); font-weight:550;}
     .tree-empty {color:var(--muted); font-size:11.5px; padding:9px 15px;}
-    .aside-foot {height:80px; flex:0 0 80px; border-top:1px solid var(--line); padding:11px 14px 10px 20px;}
-    .foot-caption {font-size:10.5px; color:var(--muted); font-weight:600; letter-spacing:.02em; margin-bottom:7px;}
-    .explorer-actions {display:flex; align-items:center; gap:4px;}
+    .aside-foot {height:56px; flex:0 0 56px; border-top:1px solid var(--line); padding:12px 14px;}
+    .explorer-actions {display:flex; align-items:center; gap:8px;}
     .explorer-actions .icon-btn {height:30px; width:31px; flex-basis:31px;}
     .editor-pane {flex:1; display:flex; flex-direction:column; min-width:0; min-height:0;}
     .editor-head {height:68px; flex:0 0 68px; border-bottom:1px solid var(--line); display:grid; grid-template-columns:1fr minmax(140px, 2fr) 1fr; align-items:center; gap:12px; padding:0 20px;}
@@ -76,7 +77,14 @@
     .document-title {min-width:0; border:1px solid transparent; border-radius:8px; background:transparent; color:var(--ink); padding:8px 9px; width:100%; text-align:center; font-size:14px; font-weight:650; text-overflow:ellipsis;}
     .document-title:hover {background:var(--hover);}
     .document-title:focus {background:var(--surface); border-color:var(--line); outline:2px solid var(--accent); outline-offset:0;}
-    .theme-select {appearance:none; border:1px solid var(--line); background:var(--surface); color:var(--muted); border-radius:8px; min-height:32px; max-width:115px; padding:6px 8px; font-size:11px;}
+    .appearance {position:relative; display:flex; align-items:center;}
+    .appearance-toggle {width:33px; flex-basis:33px; height:33px;}
+    .theme-menu {position:absolute; z-index:75; top:calc(100% + 9px); right:0; min-width:190px; background:var(--surface); border:1px solid var(--line); border-radius:11px; padding:7px; box-shadow:0 18px 50px rgba(0,0,0,.15);}
+    .theme-menu[hidden] {display:none;}
+    .theme-heading {display:block; padding:7px 10px 9px; color:var(--muted); font-size:11px; font-weight:600;}
+    .theme-menu label {display:flex; align-items:center; gap:10px; padding:10px; border-radius:8px; font-size:12px; cursor:pointer; white-space:nowrap;}
+    .theme-menu label:hover {background:var(--hover);}
+    .theme-menu input {margin:0; accent-color:var(--accent);}
     .save-btn {height:33px; border:1px solid var(--accent); background:var(--accent); color:var(--accent-contrast); padding:0 13px; border-radius:8px; font-size:11.5px; font-weight:650; white-space:nowrap;}
     .save-btn:hover {filter:brightness(.95);}
     .editor-wrap {flex:1 1 auto; min-height:0; min-width:0; display:flex; position:relative; overflow:hidden;}
@@ -93,7 +101,7 @@
     #message.error {color:var(--error);}
     #message.success {color:var(--accent);}
     .context-menu {position:fixed; z-index:60; width:192px; padding:5px; border:1px solid var(--line); border-radius:11px; background:var(--surface); box-shadow:0 16px 46px rgba(0,0,0,.15);}
-    .context-menu[hidden] {display:none;}
+    .context-menu[hidden],.context-menu button[hidden] {display:none;}
     .context-menu button {display:block; width:100%; border:0; background:transparent; border-radius:7px; color:var(--ink); text-align:left; padding:10px 11px; font-size:12px;}
     .context-menu button:hover {background:var(--hover);}
     .context-menu button.danger {color:var(--error);}
@@ -116,12 +124,10 @@
       .sidebar {width:265px; flex-basis:265px;}
       .editor-head {padding:0 11px; gap:3px;}
       .editor-head .icon-btn {width:29px; flex-basis:29px;}
-      .theme-select {max-width:98px;}
       .editor-foot {padding:0 13px; gap:8px;}
       .editor-meta {gap:9px;}
     }
     @media (max-width:760px) {
-      .shell {height:100dvh; min-height:0; width:100%; margin:0; border:0; border-radius:0;}
       .sidebar,.shell.sidebar-hidden .sidebar {position:absolute; z-index:45; left:0; top:0; bottom:0; height:100%; width:min(325px,87vw); flex-basis:auto; display:flex; border-right:1px solid var(--line); transform:translateX(-105%); transition:transform .22s ease; overflow:hidden; box-shadow:var(--shadow);}
       .shell.mobile-sidebar-open .sidebar {transform:translateX(0);}
       .scrim {position:absolute; inset:0; background:rgba(8,18,10,.32); z-index:40; display:none;}
@@ -129,7 +135,6 @@
       .sidebar-toggle,.shell.sidebar-hidden .sidebar-toggle {display:grid;}
       .editor-head {height:60px; flex-basis:60px; grid-template-columns:1fr minmax(115px,1.4fr) 1fr; padding:0 9px;}
       .document-title {font-size:12.5px; padding:7px 3px;}
-      .theme-select {max-width:78px; padding:6px 3px; font-size:10px;}
       .save-btn {padding:0 8px;}
       .editor-foot {height:52px; flex-basis:52px; font-size:10px;}
       .editor-meta {gap:8px;}
@@ -138,7 +143,6 @@
     @media (max-width:410px) {
       .editor-head {grid-template-columns:1fr minmax(84px,1.15fr) 1fr;}
       .editor-left,.editor-right {gap:0;}
-      .editor-right .theme-select {max-width:62px;}
       .editor-foot #wordCount {display:none;}
       .save-indicator {font-size:0;}
       .save-indicator::before {width:8px; height:8px;}
@@ -162,14 +166,12 @@
         <div class="empty-workspace"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8a2 2 0 0 1 2-2h5l2 2h9a2 2 0 0 1 2 2v9H3V8Z"/><path d="M3 12h18"/></svg><strong>Рабочая директория</strong>Выберите папку или перетащите её сюда, чтобы работать с файлами.<br><button class="text-button" type="button" id="inlineChooseBtn">Выбрать папку</button></div>
       </div>
       <footer class="aside-foot">
-        <div class="foot-caption">Инструменты проводника</div>
         <div class="explorer-actions">
           <button class="icon-btn" id="newFileBtn" title="Новый файл" aria-label="Создать файл" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><path d="M13 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h9"/><path d="M13 3v5h5"/><path d="M19 13v8m-4-4h8"/></svg></button>
           <button class="icon-btn" id="newFolderBtn" title="Новая папка" aria-label="Создать папку" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><path d="M3 8a2 2 0 0 1 2-2h5l2 2h8v5"/><path d="M3 8v12h10"/><path d="M19 15v8m-4-4h8"/></svg></button>
           <button class="icon-btn" id="renameBtn" title="Переименовать выбранное" aria-label="Переименовать" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><path d="m13 6 5 5M3 21l4-.8L20 7a2 2 0 0 0-3-3L4 17Z"/></svg></button>
           <button class="icon-btn" id="moveBtn" title="Переместить выбранное" aria-label="Переместить" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><path d="M4 8v11h16V8H4Zm0 0 4-4h8l4 4"/><path d="M9 14h6m-2-2 2 2-2 2"/></svg></button>
           <button class="icon-btn" id="deleteBtn" title="Удалить выбранное без корзины" aria-label="Удалить" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><path d="M4 7h16M9 7V4h6v3m3 0-1 14H7L6 7"/><path d="M10 11v6m4-6v6"/></svg></button>
-          <button class="icon-btn" id="refreshBtn" title="Обновить дерево" aria-label="Обновить" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><path d="M20 11a8 8 0 1 0-2.3 6M20 4v7h-7"/></svg></button>
         </div>
       </footer>
     </aside>
@@ -183,7 +185,17 @@
         </div>
         <input id="documentName" class="document-title" value="Без названия.txt" aria-label="Название документа (можно изменить)" title="Нажмите, чтобы переименовать документ" spellcheck="false" maxlength="200">
         <div class="editor-right">
-          <select id="themeSelect" class="theme-select" aria-label="Тема оформления" title="Тема оформления"><option value="system">Система</option><option value="light">Светлая</option><option value="dark">Тёмная</option></select>
+          <div class="appearance">
+            <button class="icon-btn appearance-toggle" id="themeBtn" type="button" title="Оформление" aria-label="Оформление" aria-haspopup="true" aria-expanded="false" aria-controls="themeMenu">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18Z" fill="currentColor" stroke="none"/></svg>
+            </button>
+            <div class="theme-menu" id="themeMenu" role="group" aria-label="Выбор темы" hidden>
+              <span class="theme-heading">Оформление</span>
+              <label><input type="radio" name="theme" value="system"> Системная</label>
+              <label><input type="radio" name="theme" value="light"> Светлая</label>
+              <label><input type="radio" name="theme" value="dark"> Тёмная</label>
+            </div>
+          </div>
           <button class="save-btn" id="saveBtn" type="button" title="Сохранить (Ctrl/⌘+S)">Сохранить</button>
         </div>
       </header>
@@ -192,7 +204,7 @@
     </section>
     <nav class="context-menu" id="contextMenu" aria-label="Действия с объектом" hidden>
       <button type="button" data-action="new-file">Новый файл</button><button type="button" data-action="new-folder">Новая папка</button><hr>
-      <button type="button" data-action="rename">Переименовать</button><button type="button" data-action="move">Переместить…</button><hr>
+      <button type="button" data-action="rename">Переименовать</button><button type="button" data-action="move">Переместить…</button><button type="button" data-action="move-root" id="moveToRootAction">Переместить в корень</button><hr>
       <button type="button" class="danger" data-action="delete">Удалить</button>
     </nav>
     <div class="drop-overlay" id="dropOverlay"><div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v8H3V9Z"/><path d="m12 11 0 8m-4-4 4-4 4 4"/></svg><strong>Перетащите папку сюда</strong><small>Она станет новым рабочим каталогом</small></div></div>
@@ -203,7 +215,7 @@
     const $ = id => document.getElementById(id);
     const shell = $('shell'), editor = $('editor'), tree = $('tree'), titleInput = $('documentName');
     const svgNS = 'http://www.w3.org/2000/svg';
-    const fileButtons = ['workspaceBtn','inlineChooseBtn','saveBtn','newFileBtn','newFolderBtn','renameBtn','moveBtn','deleteBtn','refreshBtn'];
+    const fileButtons = ['workspaceBtn','inlineChooseBtn','saveBtn','newFileBtn','newFolderBtn','renameBtn','moveBtn','deleteBtn'];
     let root = null, selectedPath = null, selectedKind = null, activePath = null, currentHandle = null;
     let filename = 'Без названия.txt', savedText = '', eol = '\n', knownVersion = null;
     let busy = false, treeVersion = 0, titleEditing = false, dismissTitleChange = false, messageTimer = null;
@@ -243,7 +255,7 @@
     function maybeDiscard() {return !dirty()||confirm('Есть несохранённые изменения. Продолжить без сохранения?');}
     function setBusy(value) {
       busy=value;
-      for(const id of fileButtons){const button=$(id);if(button)button.disabled=value||(['newFileBtn','newFolderBtn','refreshBtn'].includes(id)&&!root)||(['renameBtn','moveBtn','deleteBtn'].includes(id)&&(!root||!selectedPath));}
+      for(const id of fileButtons){const button=$(id);if(button)button.disabled=value||(['newFileBtn','newFolderBtn'].includes(id)&&!root)||(['renameBtn','moveBtn','deleteBtn'].includes(id)&&(!root||!selectedPath));}
     }
     function syncSelection(){
       tree.querySelectorAll('.tree-row').forEach(row=>{
@@ -261,12 +273,20 @@
     $('expandBtn').addEventListener('click',()=>setSidebar(true));
     $('scrim').addEventListener('click',()=>setSidebar(false));
     media.addEventListener('change',()=>shell.classList.remove('mobile-sidebar-open'));
-    const themeSelect=$('themeSelect');
+    const themeBtn=$('themeBtn'), themeMenu=$('themeMenu');
+    let themeChoice='system';
     function getTheme(){try{const p=localStorage.getItem('list-theme');return ['system','light','dark'].includes(p)?p:'system';}catch{return 'system';}}
     function applyTheme(p){document.documentElement.dataset.theme=p==='system'?(themeMedia.matches?'dark':'light'):p;}
-    themeSelect.value=getTheme();applyTheme(themeSelect.value);
-    themeSelect.addEventListener('change',()=>{applyTheme(themeSelect.value);try{localStorage.setItem('list-theme',themeSelect.value);}catch{}});
-    themeMedia.addEventListener('change',()=>{if(themeSelect.value==='system')applyTheme('system');});
+    function setTheme(p){
+      themeChoice=p;applyTheme(p);
+      for(const radio of themeMenu.querySelectorAll('input[name="theme"]'))radio.checked=radio.value===p;
+      try{localStorage.setItem('list-theme',p);}catch{}
+    }
+    function closeThemeMenu(){themeMenu.hidden=true;themeBtn.setAttribute('aria-expanded','false');}
+    themeChoice=getTheme();setTheme(themeChoice);
+    themeBtn.addEventListener('click',()=>{const open=themeMenu.hidden;themeMenu.hidden=!open;themeBtn.setAttribute('aria-expanded',String(open));});
+    themeMenu.addEventListener('change',event=>{if(event.target.matches('input[name="theme"]')){setTheme(event.target.value);closeThemeMenu();themeBtn.focus();}});
+    themeMedia.addEventListener('change',()=>{if(themeChoice==='system')applyTheme('system');});
     function resetDocument(){
       currentHandle=null;activePath=null;filename='Без названия.txt';savedText='';eol='\n';knownVersion=null;
       editor.value='';update();syncSelection();
@@ -363,7 +383,9 @@
       const path=document.createElementNS(svgNS,'path');path.setAttribute('d',d[kind]);svg.append(path);return svg;
     }
     async function renderEntries(dir,parent,path,depth,version){
-      const items=[];for await(const item of dir.values())items.push(item);
+      // The File System Access API does not expose OS-specific hidden attributes.
+      // For cross-platform consistency, dot-prefixed entries are not shown.
+      const items=[];for await(const item of dir.values())if(!item.name.startsWith('.'))items.push(item);
       if(version!==treeVersion)return;
       items.sort((a,b)=>a.kind===b.kind?a.name.localeCompare(b.name,'ru',{numeric:true}):a.kind==='directory'?-1:1);
       for(const item of items){
@@ -491,7 +513,7 @@
         }
         selectedPath=dest;selectedKind=entry.kind;
         const before=[...expanded];expanded.clear();for(const path of before)expanded.add(relocated(path));
-        expanded.add(destination);
+        if(destination)expanded.add(destination);
         await refreshTree();notice('Перемещено: '+src+' → '+dest,'success');return true;
       }catch(error){showError(error);return false;}finally{setBusy(false);}
     }
@@ -522,7 +544,7 @@
       const out=[{path:'',name:root.name}];let count=0;
       async function walk(dir,path,depth){
         if(depth>12||count>650)return;
-        for await(const item of dir.values())if(item.kind==='directory'){
+        for await(const item of dir.values())if(item.kind==='directory'&&!item.name.startsWith('.')){
           const p=pathJoin(path,item.name);if(isInside(p,source))continue;
           out.push({path:p,name:'　'.repeat(depth+1)+'↳ '+item.name});count++;
           await walk(item,p,depth+1);
@@ -576,6 +598,7 @@
     function closeMenu(){menu.hidden=true;}
     function openMenu(x,y){
       if(!selectedPath)return;
+      $('moveToRootAction').hidden=!parentPath(selectedPath);
       menu.hidden=false;
       const w=menu.offsetWidth,h=menu.offsetHeight;
       menu.style.left=Math.max(8,Math.min(x,window.innerWidth-w-8))+'px';
@@ -583,10 +606,31 @@
     }
     menu.addEventListener('click',e=>{
       const action=e.target.closest('button')?.dataset.action;if(!action)return;closeMenu();
-      ({'new-file':createFile,'new-folder':createFolder,rename:renameSelected,move:moveSelected,delete:deleteSelected})[action]();
+      ({'new-file':createFile,'new-folder':createFolder,rename:renameSelected,move:moveSelected,'move-root':()=>moveEntry(selectedPath,''),delete:deleteSelected})[action]();
     });
-    document.addEventListener('pointerdown',e=>{if(!menu.contains(e.target)&&!e.target.closest('.row-more'))closeMenu();});
-    document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMenu();if(media.matches)setSidebar(false);}});
+    document.addEventListener('pointerdown',e=>{if(!menu.contains(e.target)&&!e.target.closest('.row-more'))closeMenu();if(!themeMenu.contains(e.target)&&!themeBtn.contains(e.target))closeThemeMenu();});
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMenu();closeThemeMenu();if(media.matches)setSidebar(false);}});
+    const rootTargets=[$('workspaceBtn'),tree];
+    function hasTreeDrag(event){return Array.from(event.dataTransfer?.types||[]).includes('application/x-list-path');}
+    function rootTargetAllowed(event,target){
+      return Boolean(root&&hasTreeDrag(event)&&(target!==tree||!event.target.closest('.tree-row')));
+    }
+    for(const target of rootTargets){
+      target.addEventListener('dragover',event=>{
+        if(!rootTargetAllowed(event,target))return;
+        event.preventDefault();event.stopPropagation();event.dataTransfer.dropEffect='move';target.classList.add('root-drop');
+      });
+      target.addEventListener('dragleave',event=>{
+        if(!target.contains(event.relatedTarget))target.classList.remove('root-drop');
+      });
+      target.addEventListener('drop',event=>{
+        if(!rootTargetAllowed(event,target))return;
+        const source=event.dataTransfer.getData('application/x-list-path');if(!source)return;
+        event.preventDefault();event.stopPropagation();
+        target.classList.remove('root-drop');moveEntry(source,'');
+      });
+    }
+    document.addEventListener('dragend',()=>rootTargets.forEach(target=>target.classList.remove('root-drop')));
     $('workspaceBtn').addEventListener('click',chooseWorkspace);
     $('inlineChooseBtn').addEventListener('click',chooseWorkspace);
     $('newFileBtn').addEventListener('click',createFile);
@@ -594,7 +638,6 @@
     $('renameBtn').addEventListener('click',renameSelected);
     $('moveBtn').addEventListener('click',moveSelected);
     $('deleteBtn').addEventListener('click',deleteSelected);
-    $('refreshBtn').addEventListener('click',refreshTree);
     $('saveBtn').addEventListener('click',()=>save());
     $('undoBtn').addEventListener('click',()=>{editor.focus();document.execCommand('undo');update();});
     $('redoBtn').addEventListener('click',()=>{editor.focus();document.execCommand('redo');update();});
