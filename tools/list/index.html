@@ -9,69 +9,111 @@
     :root {
       font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       color-scheme: light;
-      --bg: #f6f6f3;
-      --paper: #fff;
-      --ink: #262822;
-      --muted: #85867e;
-      --line: #e7e8e2;
-      --accent: #315d43;
-      --accent-hover: #254936;
-      --soft: #f0f2ec;
-      --warn: #b3742d;
-      --shadow: 0 15px 50px rgba(45,50,37,.045);
+      --bg: #f6f6f3; --paper: #ffffff; --ink: #262822; --muted: #757a71;
+      --line: #e5e8e1; --accent: #315d43; --accent-hover: #254936;
+      --soft: #f0f3ee; --hover: #f7f9f5; --selected: #e9f2e9;
+      --warn: #a56b28; --error: #b3433e; --shadow: 0 15px 50px rgba(45, 50, 37, .045);
+      --scroll-track: transparent; --scroll-thumb: #c2cabf; --scroll-thumb-hover: #9ba99b;
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #151916; --paper: #1c221e; --ink: #e6ede5; --muted: #a1aca2;
+      --line: #343e36; --accent: #91c9a5; --accent-hover: #afd9bc;
+      --soft: #27352c; --hover: #283229; --selected: #30483a;
+      --warn: #e7b878; --error: #f6a29b; --shadow: 0 15px 50px rgba(0, 0, 0, .16);
+      --scroll-track: transparent; --scroll-thumb: #58685a; --scroll-thumb-hover: #768c7a;
     }
     * { box-sizing: border-box; }
-    html, body { min-height: 100%; margin: 0; }
+    html, body { margin: 0; min-width: 0; min-height: 100%; }
     body { background: var(--bg); color: var(--ink); }
-    button, textarea { font: inherit; }
+    button, select, textarea { font: inherit; }
     button { cursor: pointer; }
-    button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
-    .app { width: min(1120px, 100%); min-height: 100dvh; padding: 32px 40px 24px; margin: auto; display: flex; flex-direction: column; gap: 22px; }
-    .topbar { display:flex; align-items:center; justify-content:space-between; gap: 18px; flex-wrap:wrap; }
-    .brand { display:flex; align-items:center; gap: 12px; }
-    .brand-mark { width: 35px; height: 35px; flex: 0 0 auto; border-radius: 11px; background: var(--accent); display:grid; place-items:center; color:white; }
-    .brand strong { font-size: 18px; font-weight: 675; letter-spacing: -.045em; }
-    .brand small { display:block; color: var(--muted); font-size:11px; font-weight:500; letter-spacing:.02em; margin-top:2px; }
-    .actions { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
-    .btn { display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:37px; border-radius:9px; border:1px solid var(--line); padding:8px 13px; background:var(--paper); color:var(--ink); font-size:12.5px; font-weight:600; white-space:nowrap; }
-    .btn:hover:not(:disabled) { background:#f9faf7; border-color:#d4d8d0; }
-    .btn.primary { background:var(--accent); color:white; border-color:var(--accent); }
-    .btn.primary:hover:not(:disabled) { background:var(--accent-hover); }
-    .btn:disabled { opacity: .6; cursor: wait; }
-    .btn svg { width:15px; height:15px; stroke-width:1.9; }
-    .document { min-height: 400px; flex:1; display:flex; flex-direction:column; background:var(--paper); border:1px solid var(--line); border-radius:18px; box-shadow:var(--shadow); overflow:hidden; }
-    .doc-heading { display:flex; align-items:center; justify-content:space-between; padding:20px 27px 18px; gap:16px; border-bottom:1px solid var(--line); }
-    .file-details { min-width:0; display:flex; align-items:center; gap:12px; }
-    .file-icon { display:grid; place-items:center; flex:0 0 auto; width:37px; height:41px; border-radius:8px; color:var(--accent); background:var(--soft); }
-    .file-icon svg { width:19px; height:19px; stroke-width:1.65; }
-    .file-title { margin:0; font-size:17px; font-weight:650; letter-spacing:-.035em; text-overflow:ellipsis; overflow:hidden; white-space:nowrap; }
-    .file-description { margin:5px 0 0; font-size:12px; color:var(--muted); }
-    .save-state { flex:0 0 auto; display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted); }
-    .dot { width:7px; height:7px; border-radius:50%; background:#94aa99; }
-    .save-state.dirty .dot { background:#d4a055; }
-    .save-state.dirty { color:var(--warn); }
-    .editor-area { display:flex; flex:1; min-height:350px; position:relative; }
-    #editor { width:100%; height:100%; min-height:350px; flex:1; display:block; border:0; border-radius:0; resize:none; outline:none; padding:27px 32px 40px; background:transparent; color:var(--ink); font: 14.5px/1.85 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; letter-spacing:-.02em; tab-size:2; white-space:pre; overflow:auto; }
-    #editor::placeholder { color:#b1b5ae; opacity:1; }
-    #editor:focus-visible { outline:none; }
-    .doc-footer { border-top:1px solid var(--line); padding:12px 27px; display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; font-size:11.5px; color:var(--muted); }
-    .metrics { display:flex; align-items:center; flex-wrap:wrap; gap:16px; font-variant-numeric:tabular-nums; }
-    .footnote { display:flex; align-items:center; gap:7px; font-size:11.5px; color:var(--muted); }
-    .footnote svg { width:14px; height:14px; }
-    .helper { margin:0; min-height:18px; font-size:12px; color:var(--muted); text-align:center; }
-    .helper.error { color:#a34239; }
-    .helper.success { color:var(--accent); }
-    @media (max-width: 650px) {
-      .app { padding: 19px 12px 16px; gap:14px; }
-      .brand { margin-left:3px; }
-      .topbar { align-items:flex-start; }
-      .actions { width:100%; gap:6px; }
-      .btn { flex:1; padding:9px 8px; font-size:12px; }
-      .doc-heading { padding:16px 15px; }
-      .file-title { font-size:15px; }
-      .save-state span:last-child { display:none; }
-      #editor { padding:18px 17px 30px; font-size:13.5px; }
-      .doc-footer { padding:12px 15px; }
+    button:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    /* Firefox and Chromium/WebKit: unobtrusive but discoverable scrollbars. */
+    * { scrollbar-width: thin; scrollbar-color: var(--scroll-thumb) var(--scroll-track); }
+    *::-webkit-scrollbar { width: 10px; height: 10px; }
+    *::-webkit-scrollbar-track { background: var(--scroll-track); }
+    *::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border: 3px solid var(--paper); border-radius: 99px; }
+    *::-webkit-scrollbar-thumb:hover { background: var(--scroll-thumb-hover); }
+    .app { width: min(1440px, 100%); height: 100dvh; min-height: 500px; padding: 22px 28px 17px; margin: auto; display: flex; flex-direction: column; gap: 16px; overflow: hidden; }
+    .topbar { flex: 0 0 auto; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-mark { width: 36px; height: 36px; border-radius: 11px; background: #315d43; display: grid; place-items: center; color: #fff; }
+    .brand strong { font-size: 18px; font-weight: 680; letter-spacing: -.04em; }
+    .brand small { display: block; margin-top: 2px; font-size: 11px; color: var(--muted); }
+    .actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 37px; padding: 8px 12px; border-radius: 9px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+    .btn:hover:not(:disabled) { background: var(--hover); }
+    .btn.primary { background: #315d43; color: #fff; border-color: #315d43; }
+    .btn.primary:hover:not(:disabled) { background: #254936; }
+    .btn:disabled { opacity: .5; cursor: wait; }
+    .btn svg, .small-btn svg { width: 16px; height: 16px; stroke-width: 1.8; }
+    .theme-wrap { position: relative; display: inline-flex; align-items: center; }
+    .theme-wrap svg { width: 15px; height: 15px; position: absolute; left: 12px; pointer-events: none; }
+    .theme-select { appearance: none; min-height: 37px; padding: 8px 29px 8px 34px; border: 1px solid var(--line); border-radius: 9px; background: var(--paper); color: var(--ink); font-size: 12.5px; cursor: pointer; }
+    .theme-wrap::after { content: "⌄"; position: absolute; right: 11px; top: 6px; pointer-events: none; color: var(--muted); }
+    .workspace { display: grid; flex: 1 1 auto; min-width: 0; min-height: 0; grid-template-columns: 265px minmax(0, 1fr); gap: 16px; }
+    .sidebar, .document { background: var(--paper); border: 1px solid var(--line); border-radius: 17px; box-shadow: var(--shadow); min-width: 0; min-height: 0; overflow: hidden; }
+    .sidebar { display: flex; flex-direction: column; }
+    .sidebar-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 16px 15px 12px 18px; border-bottom: 1px solid var(--line); }
+    .sidebar-head strong { font-size: 13px; font-weight: 650; }
+    .sidebar-controls { display: flex; gap: 3px; }
+    .small-btn { display: grid; place-items: center; width: 29px; height: 29px; border: 0; background: transparent; color: var(--muted); border-radius: 7px; }
+    .small-btn:hover:not(:disabled) { background: var(--soft); color: var(--ink); }
+    .small-btn:disabled { opacity: .35; cursor: default; }
+    .workspace-name { padding: 11px 16px 9px; color: var(--muted); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tree { flex: 1; min-height: 0; overflow: auto; padding: 3px 7px 14px; }
+    .tree-node { display: flex; align-items: center; gap: 7px; width: 100%; padding: 7px 9px; border: 0; border-radius: 8px; background: transparent; color: var(--ink); text-align: left; font-size: 12.5px; min-width: 0; }
+    .tree-node:hover { background: var(--hover); }
+    .tree-node.active { background: var(--selected); color: var(--accent); font-weight: 650; }
+    .tree-node.folder-target { background: var(--soft); }
+    .tree-node svg { width: 15px; height: 15px; flex: 0 0 auto; color: var(--muted); }
+    .tree-node .chevron { width: 12px; height: 12px; transition: transform .15s; }
+    .tree-node.expanded .chevron { transform: rotate(90deg); }
+    .tree-node .node-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .empty-state { padding: 26px 15px; text-align: center; color: var(--muted); font-size: 12px; line-height: 1.7; }
+    .empty-state button { margin-top: 12px; }
+    .sidebar-foot { border-top: 1px solid var(--line); padding: 11px 14px; color: var(--muted); font-size: 11px; line-height: 1.5; }
+    .document { display: flex; flex-direction: column; }
+    .doc-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 22px; border-bottom: 1px solid var(--line); }
+    .file-details { display: flex; min-width: 0; align-items: center; gap: 11px; }
+    .file-icon { display: grid; place-items: center; flex: 0 0 auto; width: 36px; height: 39px; border-radius: 8px; color: var(--accent); background: var(--soft); }
+    .file-icon svg { width: 19px; height: 19px; }
+    .file-title { margin: 0; font-size: 16px; font-weight: 660; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
+    .file-description { margin: 5px 0 0; color: var(--muted); font-size: 11.5px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
+    .save-state { flex: 0 0 auto; display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 11.5px; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: #94aa99; }
+    .save-state.dirty { color: var(--warn); }
+    .save-state.dirty .dot { background: var(--warn); }
+    /* Crucial sizing: the flex child can shrink and textarea fills only its actual area. */
+    .editor-area { flex: 1 1 auto; position: relative; display: flex; min-width: 0; min-height: 0; overflow: hidden; }
+    #editor { flex: 1 1 auto; display: block; min-width: 0; min-height: 0; width: 100%; height: 100%; padding: 23px 27px 32px; border: 0; border-radius: 0; resize: none; outline: none; background: transparent; color: var(--ink); font: 14px/1.8 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; letter-spacing: -.015em; tab-size: 2; white-space: pre-wrap; overflow-wrap: anywhere; overflow-x: hidden; overflow-y: auto; }
+    #editor::placeholder { color: var(--muted); opacity: .75; }
+    #editor:focus-visible { outline: none; }
+    .doc-footer { flex: 0 0 auto; border-top: 1px solid var(--line); padding: 11px 21px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 11px; color: var(--muted); }
+    .metrics { display: flex; gap: 14px; flex-wrap: wrap; font-variant-numeric: tabular-nums; }
+    .helper { flex: 0 0 auto; min-height: 16px; margin: 0; text-align: center; font-size: 11.5px; color: var(--muted); }
+    .helper.error { color: var(--error); }
+    .helper.success { color: var(--accent); }
+    @media (max-width: 790px) {
+      .app { height: auto; min-height: 100dvh; overflow: visible; padding: 16px 12px; gap: 12px; }
+      .topbar { align-items: flex-start; }
+      .actions { width: 100%; }
+      .workspace { display: flex; flex-direction: column; flex: auto; }
+      .sidebar { min-height: 125px; max-height: 260px; flex: 0 0 auto; }
+      .tree { min-height: 80px; }
+      .document { min-height: 430px; flex: 1 1 auto; }
+      .editor-area { min-height: 330px; }
+    }
+    @media (max-width: 480px) {
+      .actions { gap: 5px; }
+      .btn { padding: 8px 9px; font-size: 11.5px; }
+      .doc-heading { padding: 13px; }
+      .file-title { font-size: 14px; }
+      .save-state span:last-child { display: none; }
+      #editor { padding: 17px 14px 25px; font-size: 13px; }
+      .doc-footer { padding: 10px 13px; }
+      .theme-select { font-size: 11.5px; }
     }
   </style>
 </head>
@@ -82,58 +124,78 @@
         <div class="brand-mark" aria-hidden="true">
           <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5h8l4 4V20a1 1 0 0 1-1 1H7a2 2 0 0 1-2-2V5.5a2 2 0 0 1 2-2Z"/><path d="M14.5 3.5V8H19M9 12h6M9 16h6"/></svg>
         </div>
-        <div><strong>Лист</strong><small>Локальный текстовый редактор</small></div>
+        <div><strong>Лист</strong><small>Локальный текстовый редактор · v0.2.0</small></div>
       </div>
       <div class="actions" role="group" aria-label="Работа с файлами">
-        <button class="btn" id="newBtn" type="button" title="Новый документ (Ctrl/⌘+N)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>Новый
-        </button>
-        <button class="btn" id="openBtn" type="button" title="Открыть файл (Ctrl/⌘+O)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M3 11h18"/></svg>Открыть
-        </button>
-        <button class="btn" id="saveAsBtn" type="button" title="Сохранить под другим именем (Ctrl/⌘+Shift+S)">Сохранить как…</button>
-        <button class="btn primary" id="saveBtn" type="button" title="Сохранить (Ctrl/⌘+S)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h12l4 4v14H3V3h2Z"/><path d="M7 3v7h10V3M7 21v-8h10v8"/></svg>Сохранить
-        </button>
+        <button class="btn" id="newBtn" type="button" title="Новый документ (Ctrl/⌘+N)">Новый</button>
+        <button class="btn" id="openBtn" type="button" title="Открыть файл (Ctrl/⌘+O)">Открыть</button>
+        <button class="btn" id="folderBtn" type="button" title="Выбрать рабочую папку">Папка…</button>
+        <button class="btn" id="saveAsBtn" type="button" title="Сохранить как (Ctrl/⌘+Shift+S)">Сохранить как…</button>
+        <button class="btn primary" id="saveBtn" type="button" title="Сохранить (Ctrl/⌘+S)">Сохранить</button>
+        <label class="theme-wrap" title="Тема оформления">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42"/></svg>
+          <select id="themeSelect" class="theme-select" aria-label="Тема оформления"><option value="system">Системная</option><option value="light">Светлая</option><option value="dark">Тёмная</option></select>
+        </label>
       </div>
     </header>
-
-    <section class="document" aria-label="Текстовый документ">
-      <div class="doc-heading">
-        <div class="file-details">
-          <div class="file-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l5 5v12a1 1 0 0 1-1 1H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v6h5M9 13h6M9 17h6"/></svg></div>
-          <div style="min-width:0"><h1 class="file-title" id="fileName">Без названия.txt</h1><p class="file-description" id="fileDescription">Новый текстовый документ</p></div>
+    <div class="workspace">
+      <aside class="sidebar" aria-label="Проводник рабочей папки">
+        <div class="sidebar-head">
+          <strong>Проводник</strong>
+          <div class="sidebar-controls">
+            <button class="small-btn" type="button" id="newFileBtn" disabled title="Создать файл в выбранной папке" aria-label="Создать файл"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></button>
+            <button class="small-btn" type="button" id="refreshBtn" disabled title="Обновить проводник" aria-label="Обновить"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 6M20 4v7h-7"/></svg></button>
+          </div>
         </div>
-        <div class="save-state" id="saveState" aria-live="polite"><span class="dot"></span><span id="stateText">Без изменений</span></div>
-      </div>
-      <div class="editor-area">
-        <textarea id="editor" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" aria-label="Содержимое текстового файла" placeholder="Начните печатать или откройте текстовый файл…"></textarea>
-      </div>
-      <div class="doc-footer">
-        <div class="metrics"><span id="lineCount">1 строка</span><span id="wordCount">0 слов</span><span id="charCount">0 символов</span></div>
-        <div>Обычный текст · UTF-8</div>
-      </div>
-    </section>
-
-    <p class="helper" id="helper" role="status" aria-live="polite">Файлы остаются на вашем компьютере. Сервер не используется.</p>
+        <div id="workspaceName" class="workspace-name">Рабочая папка не выбрана</div>
+        <div id="tree" class="tree">
+          <div class="empty-state">Выберите папку на компьютере, чтобы открывать и редактировать файлы в ней.<br><button class="btn" id="chooseFolderInline" type="button">Выбрать папку</button></div>
+        </div>
+        <div class="sidebar-foot">Файлы остаются на вашем устройстве. Для доступа нужна явная авторизация браузера.</div>
+      </aside>
+      <section class="document" aria-label="Текстовый документ">
+        <div class="doc-heading">
+          <div class="file-details">
+            <div class="file-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l5 5v12a1 1 0 0 1-1 1H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v6h5M9 13h6M9 17h6"/></svg></div>
+            <div style="min-width:0"><h1 class="file-title" id="fileName">Без названия.txt</h1><p class="file-description" id="fileDescription">Новый текстовый документ</p></div>
+          </div>
+          <div class="save-state" id="saveState" aria-live="polite"><span class="dot"></span><span id="stateText">Без изменений</span></div>
+        </div>
+        <div class="editor-area">
+          <textarea id="editor" wrap="soft" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" aria-label="Содержимое текстового файла" placeholder="Начните печатать или откройте текстовый файл…"></textarea>
+        </div>
+        <div class="doc-footer">
+          <div class="metrics"><span id="lineCount">1 строка</span><span id="wordCount">0 слов</span><span id="charCount">0 символов</span></div>
+          <div>Обычный текст · UTF-8</div>
+        </div>
+      </section>
+    </div>
+    <p class="helper" id="helper" role="status" aria-live="polite">Файлы обрабатываются локально. Сервер не используется.</p>
   </main>
-
   <script>
     'use strict';
-    const editor = document.getElementById('editor');
-    const fileName = document.getElementById('fileName');
-    const fileDescription = document.getElementById('fileDescription');
-    const state = document.getElementById('saveState');
-    const stateText = document.getElementById('stateText');
-    const helper = document.getElementById('helper');
-    const actions = ['newBtn','openBtn','saveBtn','saveAsBtn'].map(id => document.getElementById(id));
+    const $ = id => document.getElementById(id);
+    const editor = $('editor');
+    const fileName = $('fileName');
+    const fileDescription = $('fileDescription');
+    const state = $('saveState');
+    const stateText = $('stateText');
+    const helper = $('helper');
+    const tree = $('tree');
+    const actions = ['newBtn', 'openBtn', 'folderBtn', 'saveBtn', 'saveAsBtn', 'newFileBtn', 'refreshBtn'].map($);
+    const svgNS = 'http://www.w3.org/2000/svg';
     let handle = null;
+    let rootDirectory = null;
+    let creationDirectory = null;
+    let activePath = null;
     let savedText = '';
     let eol = '\n';
     let knownVersion = null;
     let busy = false;
     let filename = 'Без названия.txt';
     let hintTimer;
+    let treeVersion = 0;
+    const expandedPaths = new Set();
 
     function plural(n, one, few, many) {
       const mod100 = n % 100, mod10 = n % 10;
@@ -147,86 +209,102 @@
       fileName.textContent = filename;
       document.title = (changed ? '● ' : '') + filename + ' — Лист';
       const value = editor.value;
-      const lines = value.split('\n').length;
-      const words = (value.trim().match(/\S+/g) || []).length;
-      document.getElementById('lineCount').textContent = plural(lines, 'строка', 'строки', 'строк');
-      document.getElementById('wordCount').textContent = plural(words, 'слово', 'слова', 'слов');
-      document.getElementById('charCount').textContent = plural(Array.from(value).length, 'символ', 'символа', 'символов');
+      $('lineCount').textContent = plural(value.split('\n').length, 'строка', 'строки', 'строк');
+      $('wordCount').textContent = plural((value.trim().match(/\S+/g) || []).length, 'слово', 'слова', 'слов');
+      $('charCount').textContent = plural(Array.from(value).length, 'символ', 'символа', 'символов');
     }
     function notice(message, type = '') {
       clearTimeout(hintTimer);
       helper.textContent = message;
       helper.className = 'helper' + (type ? ' ' + type : '');
-      if (type === 'success') hintTimer = setTimeout(() => notice('Файлы остаются на вашем компьютере. Сервер не используется.'), 5000);
+      if (type === 'success') hintTimer = setTimeout(() => notice('Файлы обрабатываются локально. Сервер не используется.'), 5000);
     }
     function maybeDiscard() { return !dirty() || window.confirm('Есть несохранённые изменения. Продолжить без сохранения?'); }
     function setBusy(value) {
       busy = value;
-      actions.forEach(button => { button.disabled = value; });
+      for (const button of actions) button.disabled = value || ((button.id === 'newFileBtn' || button.id === 'refreshBtn') && !rootDirectory);
     }
     function isCancelled(error) { return error && error.name === 'AbortError'; }
     function showError(error) {
       if (isCancelled(error)) return;
-      if (error?.name === 'NotAllowedError') notice('Доступ к файлу не разрешён. Разрешите запись в диалоге браузера.', 'error');
+      if (error?.name === 'NotAllowedError' || error?.name === 'SecurityError') notice('Браузер не предоставил доступ. Проверьте разрешение на чтение и запись.', 'error');
       else notice('Ошибка: ' + (error?.message || String(error)), 'error');
       console.error(error);
     }
-    function requireApi() {
-      if ('showOpenFilePicker' in window && 'showSaveFilePicker' in window && window.isSecureContext) return true;
-      notice('Нужен Chrome или Edge с поддержкой File System Access API. Откройте этот HTML-файл непосредственно в браузере.', 'error');
+    function requireApi(requiredMethods) {
+      if (window.isSecureContext && requiredMethods.every(method => typeof window[method] === 'function')) return true;
+      notice('Требуется актуальный Chrome или Edge с File System Access API (безопасный контекст).', 'error');
       return false;
     }
-    async function newDocument() {
-      if (busy || !maybeDiscard()) return;
-      handle = null;
-      knownVersion = null;
-      savedText = '';
-      eol = '\n';
-      filename = 'Без названия.txt';
-      editor.value = '';
-      fileDescription.textContent = 'Новый текстовый документ';
-      update(); editor.focus();
-      notice('Новый документ создан. Для записи на диск нажмите «Сохранить».');
+    function syncActive() {
+      tree.querySelectorAll('[data-file-path]').forEach(button => {
+        button.classList.toggle('active', button.dataset.filePath === activePath);
+      });
+      tree.querySelectorAll('[data-folder-path]').forEach(button => {
+        button.classList.toggle('folder-target', button.dataset.folderPath === creationDirectory?.path);
+      });
     }
-    async function openDocument() {
-      if (busy || !maybeDiscard() || !requireApi()) return;
+    function resetDocument() {
+      handle = null; activePath = null; knownVersion = null; savedText = ''; eol = '\n';
+      filename = 'Без названия.txt'; editor.value = '';
+      fileDescription.textContent = 'Новый текстовый документ';
+      update(); syncActive(); editor.focus();
+    }
+    function newDocument() {
+      if (busy || !maybeDiscard()) return;
+      resetDocument();
+      notice('Новый документ. Для записи на диск нажмите «Сохранить».');
+    }
+    async function loadFile(selected, path = null) {
+      if (busy || !maybeDiscard()) return;
       setBusy(true);
       try {
-        const [selected] = await window.showOpenFilePicker({ multiple: false, id: 'list-open' });
         const file = await selected.getFile();
         if (file.size > 10 * 1024 * 1024 && !window.confirm('Файл больше 10 МБ. Открытие может замедлить редактор. Продолжить?')) return;
         const raw = await file.text();
         if (raw.includes('\0') && !window.confirm('Похоже, это двоичный файл. Открыть его как текст?')) return;
         handle = selected;
+        activePath = path;
         knownVersion = { lastModified: file.lastModified, size: file.size };
         filename = selected.name;
         eol = raw.includes('\r\n') ? '\r\n' : '\n';
         editor.value = raw;
         savedText = editor.value;
-        fileDescription.textContent = 'Открыт с вашего компьютера';
-        update(); editor.focus();
-        notice('Файл открыт. Изменения можно сохранить в тот же файл.', 'success');
+        fileDescription.textContent = path && rootDirectory ? rootDirectory.name + '/' + path : 'Открыт с вашего компьютера';
+        update(); syncActive(); editor.focus();
+        notice('Файл открыт. Изменения сохраняются непосредственно на диск.', 'success');
       } catch (error) { showError(error); }
       finally { setBusy(false); }
     }
+    async function openDocument() {
+      if (busy || !maybeDiscard() || !requireApi(['showOpenFilePicker'])) return;
+      // The picker must be invoked synchronously from the user gesture.
+      let picked;
+      try { picked = window.showOpenFilePicker({ multiple: false, id: 'list-open' }); }
+      catch (error) { showError(error); return; }
+      try {
+        const [selected] = await picked;
+        // loadFile has its own unsaved-changes guard; nothing changed meanwhile.
+        await loadFile(selected);
+      } catch (error) { showError(error); }
+    }
     async function saveDocument(saveAs = false) {
-      if (busy || !requireApi()) return;
-      // Prompt before any await: file picker requires a direct user gesture.
+      if (busy || !requireApi(['showSaveFilePicker'])) return;
       let target = handle;
       let chosenNewHandle = false;
       if (saveAs || !target) {
         try {
-          target = await window.showSaveFilePicker({
+          const pending = window.showSaveFilePicker({
             id: 'list-save', suggestedName: filename,
             types: [{ description: 'Текстовые файлы', accept: { 'text/plain': ['.txt', '.md', '.csv', '.log', '.json', '.xml', '.yaml', '.yml'] } }]
           });
+          target = await pending;
           chosenNewHandle = true;
         } catch (error) { showError(error); return; }
       }
       setBusy(true);
       const snapshot = editor.value;
       try {
-        // Warn if another application changed the opened file since the last read/save.
         if (!chosenNewHandle && knownVersion) {
           const disk = await target.getFile();
           if (disk.lastModified !== knownVersion.lastModified || disk.size !== knownVersion.size) {
@@ -234,33 +312,159 @@
           }
         }
         const writable = await target.createWritable();
-        try {
-          await writable.write(snapshot.replace(/\n/g, eol));
-          await writable.close();
-        } catch (error) {
-          try { await writable.abort(); } catch (_) { /* Stream may already be closed. */ }
-          throw error;
-        }
+        try { await writable.write(snapshot.replace(/\n/g, eol)); await writable.close(); }
+        catch (error) { try { await writable.abort(); } catch (_) { /* Stream already closed. */ } throw error; }
         handle = target;
         filename = target.name;
+        if (chosenNewHandle) activePath = null;
         const disk = await target.getFile();
         knownVersion = { lastModified: disk.lastModified, size: disk.size };
         savedText = snapshot;
-        fileDescription.textContent = 'Открыт с вашего компьютера';
-        update();
+        fileDescription.textContent = activePath && rootDirectory ? rootDirectory.name + '/' + activePath : 'Открыт с вашего компьютера';
+        update(); syncActive();
         notice(dirty() ? 'Сохранено. Есть новые несохранённые изменения.' : 'Изменения записаны в файл на диске.', 'success');
       } catch (error) { showError(error); }
       finally { setBusy(false); }
     }
-    document.getElementById('newBtn').addEventListener('click', newDocument);
-    document.getElementById('openBtn').addEventListener('click', openDocument);
-    document.getElementById('saveBtn').addEventListener('click', () => saveDocument());
-    document.getElementById('saveAsBtn').addEventListener('click', () => saveDocument(true));
+    function icon(name) {
+      const svg = document.createElementNS(svgNS, 'svg');
+      svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('fill', 'none'); svg.setAttribute('stroke', 'currentColor');
+      svg.setAttribute('stroke-width', '1.8'); svg.setAttribute('stroke-linecap', 'round'); svg.setAttribute('stroke-linejoin', 'round');
+      const path = document.createElementNS(svgNS, 'path');
+      path.setAttribute('d', name === 'chevron' ? 'm9 6 6 6-6 6' : name === 'folder' ? 'M3 8a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z' : 'M7 3h8l4 4v13a1 1 0 0 1-1 1H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z');
+      svg.append(path); return svg;
+    }
+    function pathJoin(parent, name) { return parent ? parent + '/' + name : name; }
+    async function renderChildren(directory, parent, basePath, depth, version) {
+      const entries = [];
+      try { for await (const entry of directory.values()) entries.push(entry); }
+      catch (error) { if (treeVersion === version) showError(error); return; }
+      if (treeVersion !== version) return;
+      entries.sort((a, b) => (a.kind === b.kind ? a.name.localeCompare(b.name, 'ru', { numeric: true }) : a.kind === 'directory' ? -1 : 1));
+      if (!entries.length) {
+        const empty = document.createElement('div'); empty.className = 'empty-state';
+        empty.style.padding = '13px 8px'; empty.textContent = 'Папка пуста'; parent.append(empty);
+      }
+      for (const entry of entries) {
+        const path = pathJoin(basePath, entry.name);
+        const button = document.createElement('button'); button.type = 'button'; button.className = 'tree-node';
+        button.style.paddingLeft = (9 + depth * 16) + 'px';
+        button.title = path;
+        if (entry.kind === 'directory') {
+          button.dataset.folderPath = path;
+          const arrow = icon('chevron'); arrow.classList.add('chevron'); button.append(arrow, icon('folder'));
+          const name = document.createElement('span'); name.className = 'node-name'; name.textContent = entry.name; button.append(name);
+          const nested = document.createElement('div'); nested.hidden = true;
+          let rendered = false;
+          async function toggleFolder() {
+            creationDirectory = { handle: entry, path };
+            const willExpand = nested.hidden;
+            if (willExpand) {
+              nested.hidden = false; button.classList.add('expanded'); button.setAttribute('aria-expanded', 'true'); expandedPaths.add(path);
+              if (!rendered) { rendered = true; await renderChildren(entry, nested, path, depth + 1, version); }
+            } else {
+              nested.hidden = true; button.classList.remove('expanded'); button.setAttribute('aria-expanded', 'false'); expandedPaths.delete(path);
+            }
+            syncActive();
+          }
+          button.setAttribute('aria-expanded', 'false'); button.addEventListener('click', toggleFolder);
+          parent.append(button, nested);
+          if (expandedPaths.has(path)) {
+            nested.hidden = false; button.classList.add('expanded'); button.setAttribute('aria-expanded', 'true'); rendered = true;
+            await renderChildren(entry, nested, path, depth + 1, version);
+          }
+        } else {
+          button.dataset.filePath = path;
+          const spacer = document.createElement('span'); spacer.style.cssText = 'width:12px;flex:0 0 12px';
+          button.append(spacer, icon('file'));
+          const name = document.createElement('span'); name.className = 'node-name'; name.textContent = entry.name; button.append(name);
+          button.addEventListener('click', () => loadFile(entry, path));
+          parent.append(button);
+        }
+      }
+      syncActive();
+    }
+    async function refreshTree() {
+      if (!rootDirectory) return;
+      const version = ++treeVersion;
+      tree.replaceChildren();
+      $('workspaceName').textContent = rootDirectory.name;
+      await renderChildren(rootDirectory, tree, '', 0, version);
+    }
+    async function chooseFolder() {
+      if (busy || !requireApi(['showDirectoryPicker'])) return;
+      let pending;
+      try { pending = window.showDirectoryPicker({ id: 'list-workspace', mode: 'readwrite' }); }
+      catch (error) { showError(error); return; }
+      setBusy(true);
+      try {
+        const directory = await pending;
+        // Changing the workspace does not discard the currently edited document.
+        rootDirectory = directory;
+        creationDirectory = { handle: directory, path: '' };
+        activePath = null;
+        expandedPaths.clear();
+        setBusy(false);
+        await refreshTree();
+        notice('Рабочая папка «' + directory.name + '» открыта. Выберите файл в проводнике.', 'success');
+      } catch (error) { showError(error); }
+      finally { setBusy(false); }
+    }
+    async function createFile() {
+      if (busy || !rootDirectory || !maybeDiscard()) return;
+      const parent = creationDirectory || { handle: rootDirectory, path: '' };
+      const proposed = window.prompt('Название нового файла в папке «' + (parent.path || rootDirectory.name) + '»:', 'Новый файл.txt');
+      if (proposed === null) return;
+      const name = proposed.trim();
+      if (!name || name === '.' || name === '..' || /[\\/\x00-\x1f]/.test(name)) {
+        notice('Недопустимое имя файла.', 'error'); return;
+      }
+      setBusy(true);
+      try {
+        // Do not truncate or silently open an existing file.
+        try {
+          await parent.handle.getFileHandle(name, { create: false });
+          notice('Файл с таким именем уже существует. Выберите другое имя.', 'error'); return;
+        } catch (error) { if (error.name !== 'NotFoundError') throw error; }
+        const newHandle = await parent.handle.getFileHandle(name, { create: true });
+        handle = newHandle; activePath = pathJoin(parent.path, name);
+        knownVersion = null; savedText = ''; eol = '\n'; filename = name; editor.value = '';
+        fileDescription.textContent = rootDirectory.name + '/' + activePath;
+        update();
+        await refreshTree(); syncActive(); editor.focus();
+        notice('Файл создан в рабочей папке. Можно печатать и сохранять.', 'success');
+      } catch (error) { showError(error); }
+      finally { setBusy(false); }
+    }
+    const themeSelect = $('themeSelect');
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    function themePreference() {
+      try { const value = localStorage.getItem('list-theme'); return ['system', 'light', 'dark'].includes(value) ? value : 'system'; }
+      catch (_) { return 'system'; }
+    }
+    function applyTheme(preference) {
+      document.documentElement.dataset.theme = preference === 'system' ? (media.matches ? 'dark' : 'light') : preference;
+    }
+    themeSelect.value = themePreference();
+    applyTheme(themeSelect.value);
+    themeSelect.addEventListener('change', () => {
+      applyTheme(themeSelect.value);
+      try { localStorage.setItem('list-theme', themeSelect.value); } catch (_) { /* May be unavailable under file://. */ }
+    });
+    media.addEventListener('change', () => { if (themeSelect.value === 'system') applyTheme('system'); });
+
+    $('newBtn').addEventListener('click', newDocument);
+    $('openBtn').addEventListener('click', openDocument);
+    $('folderBtn').addEventListener('click', chooseFolder);
+    $('chooseFolderInline').addEventListener('click', chooseFolder);
+    $('refreshBtn').addEventListener('click', () => refreshTree());
+    $('newFileBtn').addEventListener('click', createFile);
+    $('saveBtn').addEventListener('click', () => saveDocument());
+    $('saveAsBtn').addEventListener('click', () => saveDocument(true));
     editor.addEventListener('input', update);
     editor.addEventListener('keydown', event => {
       if (event.key === 'Tab') {
-        event.preventDefault();
-        const start = editor.selectionStart, end = editor.selectionEnd;
+        event.preventDefault(); const start = editor.selectionStart, end = editor.selectionEnd;
         editor.setRangeText('  ', start, end, 'end'); update();
       }
     });
@@ -275,9 +479,9 @@
     window.addEventListener('beforeunload', event => {
       if (dirty()) { event.preventDefault(); event.returnValue = ''; }
     });
-    update();
-    if (!('showOpenFilePicker' in window) || !('showSaveFilePicker' in window)) {
-      notice('Для прямого сохранения файлов откройте страницу в актуальном Chrome или Edge.', 'error');
+    update(); setBusy(false);
+    if (!('showDirectoryPicker' in window) || !('showOpenFilePicker' in window)) {
+      notice('Для прямого редактирования файлов используйте актуальный Chrome или Edge.', 'error');
     }
   </script>
 </body>
