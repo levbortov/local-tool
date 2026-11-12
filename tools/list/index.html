@@ -63,6 +63,23 @@
     .tree-entry svg {width:15px; height:15px; flex:0 0 15px; color:var(--muted);}
     .tree-entry .twisty {width:12px; height:12px; flex-basis:12px; transition:transform .15s;}
     .tree-entry[aria-expanded="true"] .twisty {transform:rotate(90deg);}
+    .sync-dot {display:block; width:7px; height:7px; border-radius:50%; flex:0 0 7px; background:var(--muted); opacity:.55; margin:0 4px;}
+    .sync-dot[data-status="ok"] {background:var(--accent); opacity:.78;}
+    .sync-dot[data-status="dirty"] {background:var(--warning); opacity:1;}
+    .sync-dot[data-status="external"] {background:#a980c8; opacity:1;}
+    .sync-dot[data-status="error"] {background:var(--error); opacity:1;}
+    .sync-dot[data-status="unknown"] {background:var(--muted); opacity:.55;}
+    .sync-summary {display:flex; align-items:center; gap:7px; min-width:0; max-width:55%; color:var(--muted); font-size:11px; white-space:nowrap;}
+    .sync-summary .sync-dot {margin:0;}
+    .sync-summary-text {overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+    .sync-summary[data-status="dirty"] {color:var(--warning);}
+    .sync-summary[data-status="external"] {color:#a980c8;}
+    .sync-summary[data-status="error"] {color:var(--error);}
+    .sync-summary[data-status="checking"] .sync-dot {animation:sync-pulse 1s ease-in-out infinite alternate;}
+    @keyframes sync-pulse {to{opacity:.25;}}
+    .icon-btn .collapsed-icon {display:none;}
+    #foldersToggleBtn[data-mode="collapse"] .expanded-icon {display:none;}
+    #foldersToggleBtn[data-mode="collapse"] .collapsed-icon {display:block;}
     .entry-label {white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0;}
     .row-more {opacity:0; width:26px; height:26px; flex:0 0 26px; border:0; color:var(--muted); background:transparent; border-radius:6px; margin-right:3px; font-size:19px; line-height:1;}
     .tree-row:hover .row-more,.tree-row.selected .row-more,.row-more:focus-visible {opacity:1;}
@@ -74,6 +91,7 @@
     .aside-foot {height:var(--footer-height); flex:0 0 var(--footer-height); border-top:1px solid var(--line); padding:0 14px; display:flex; align-items:center;}
     .explorer-actions {display:flex; align-items:center; gap:8px; width:100%;}
     .toolbar-spacer {flex:1; min-width:0;}
+    @media(max-width:360px){.sync-summary {max-width:38%;}}
     .sort-menu {position:fixed; z-index:75; width:235px; padding:7px; border:1px solid var(--line); border-radius:11px; background:var(--surface); box-shadow:0 18px 50px rgba(0,0,0,.15);}
     .sort-menu[hidden] {display:none;}
     .sort-menu .menu-heading {display:block; padding:7px 10px 9px; color:var(--muted); font-size:11px; font-weight:600;}
@@ -190,17 +208,16 @@
       </div>
       <footer class="aside-foot">
         <div class="explorer-actions">
-          <button class="icon-btn" id="expandAllBtn" type="button" title="Раскрыть все папки" aria-label="Раскрыть все папки" disabled>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m8 5 4 4 4-4M8 15l4 4 4-4"/><path d="M5 12h14"/></svg>
-          </button>
-          <button class="icon-btn" id="collapseAllBtn" type="button" title="Свернуть все папки" aria-label="Свернуть все папки" disabled>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m8 9 4-4 4 4M8 15l4 4 4-4"/><path d="M5 12h14"/></svg>
+          <button class="icon-btn" id="foldersToggleBtn" data-mode="expand" type="button" title="Раскрыть все папки" aria-label="Раскрыть все папки" disabled>
+            <svg class="expanded-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m8 5 4 4 4-4M8 15l4 4 4-4"/><path d="M5 12h14"/></svg>
+            <svg class="collapsed-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m8 9 4-4 4 4M8 15l4 4 4-4"/><path d="M5 12h14"/></svg>
           </button>
           <span class="toolbar-spacer" aria-hidden="true"></span>
           <button class="icon-btn" id="sortBtn" type="button" title="Сортировать файлы и папки" aria-label="Сортировать файлы и папки" aria-haspopup="true" aria-expanded="false" aria-controls="sortMenu" disabled>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h11M4 12h8M4 17h5"/><path d="m16 14 3 3 3-3M19 17V5"/></svg>
           </button>
-          <button class="icon-btn" id="refreshBtn" title="Обновить список файлов" aria-label="Обновить список файлов" disabled>
+          <div class="sync-summary" id="syncSummary" role="status" aria-live="polite" data-status="unknown" title="Соответствие файлов на диске. Проверка выполняется при открытии папки и по кнопке обновления."><span class="sync-dot" aria-hidden="true"></span><span id="syncSummaryText" class="sync-summary-text">Нет каталога</span></div>
+          <button class="icon-btn" id="refreshBtn" title="Проверить файлы на диске" aria-label="Проверить файлы на диске" disabled>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 6"/><path d="M20 4v7h-7"/></svg>
           </button>
         </div>
@@ -250,12 +267,16 @@
     const $ = id => document.getElementById(id);
     const shell = $('shell'), editor = $('editor'), tree = $('tree'), titleInput = $('documentName');
     const svgNS = 'http://www.w3.org/2000/svg';
-    const fileButtons = ['workspaceBtn','inlineChooseBtn','saveBtn','refreshBtn','expandAllBtn','collapseAllBtn','sortBtn'];
-    const treeTools = new Set(['refreshBtn','expandAllBtn','collapseAllBtn','sortBtn']);
+    const fileButtons = ['workspaceBtn','inlineChooseBtn','refreshBtn','foldersToggleBtn','sortBtn'];
+    const treeTools = new Set(['refreshBtn','foldersToggleBtn','sortBtn']);
     let root = null, selectedPath = null, selectedKind = null, activePath = null, currentHandle = null;
     let filename = 'Без названия.txt', savedText = '', eol = '\n', knownVersion = null;
     let busy = false, treeVersion = 0, titleEditing = false, dismissTitleChange = false, messageTimer = null;
     const expanded = new Set(), media = window.matchMedia('(max-width:760px)');
+    let undoStack=[],redoStack=[],historyValue='',pendingSelection=null,historySelection={start:0,end:0};
+    let checkedEntries=new Map(), observedVersions=new Map(), syncWarnings=new Map();
+    let syncPhase='idle',syncPartial=false,syncCount=0,syncGeneration=0;
+    const SYNC_MAX_ENTRIES=1500,SYNC_MAX_DEPTH=20;
     const themeMedia = window.matchMedia('(prefers-color-scheme: dark)');
     const pathJoin = (dir, name) => dir ? dir + '/' + name : name;
     const parentPath = path => path.includes('/') ? path.slice(0,path.lastIndexOf('/')) : '';
@@ -287,11 +308,149 @@
       $('lineCount').textContent=val.split('\n').length+' стр.';
       $('wordCount').textContent=(val.trim().match(/\S+/g)||[]).length+' слов';
       $('charCount').textContent=Array.from(val).length+' симв.';
+      updateButtonStates();
+      updateSyncUI();
+    }
+    // Undo/redo tracks text edits as compact replacement patches, rather than
+    // querying the browser's opaque native textarea history.
+    function resetHistory(){undoStack=[];redoStack=[];historyValue=editor.value;pendingSelection=null;historySelection={start:0,end:0};updateButtonStates();}
+    function recordEdit(){
+      const before=historyValue,after=editor.value;
+      if(before!==after){
+        let start=0;while(start<before.length&&start<after.length&&before[start]===after[start])start++;
+        let suffix=0;while(suffix<before.length-start&&suffix<after.length-start&&before[before.length-1-suffix]===after[after.length-1-suffix])suffix++;
+        const patch={start,removed:before.slice(start,before.length-suffix),inserted:after.slice(start,after.length-suffix),
+          beforeSel:pendingSelection||historySelection,afterSel:{start:editor.selectionStart,end:editor.selectionEnd}};
+        undoStack.push(patch);if(undoStack.length>250)undoStack.shift();
+        redoStack=[];historyValue=after;
+      }
+      pendingSelection=null;historySelection={start:editor.selectionStart,end:editor.selectionEnd};
+      update();
+    }
+    function undoEdit(){
+      if(busy||!undoStack.length)return;
+      const patch=undoStack.pop();
+      editor.value=editor.value.slice(0,patch.start)+patch.removed+editor.value.slice(patch.start+patch.inserted.length);
+      redoStack.push(patch);historyValue=editor.value;
+      editor.focus();editor.setSelectionRange(patch.beforeSel.start,patch.beforeSel.end);
+      historySelection={start:editor.selectionStart,end:editor.selectionEnd};pendingSelection=null;update();
+    }
+    function redoEdit(){
+      if(busy||!redoStack.length)return;
+      const patch=redoStack.pop();
+      editor.value=editor.value.slice(0,patch.start)+patch.inserted+editor.value.slice(patch.start+patch.removed.length);
+      undoStack.push(patch);historyValue=editor.value;
+      editor.focus();editor.setSelectionRange(patch.afterSel.start,patch.afterSel.end);
+      historySelection={start:editor.selectionStart,end:editor.selectionEnd};pendingSelection=null;update();
+    }
+    // Scan is explicit (on workspace open or refresh), never background file watching.
+    // File metadata is compared to previous observations; disk files are not modified.
+    const stampChanged=(a,b)=>Boolean(a&&(a.size!==b.size||a.lastModified!==b.lastModified));
+    async function scanWorkspace(){
+      if(!root){syncPhase='idle';checkedEntries.clear();updateSyncUI();return;}
+      const token=++syncGeneration,workspace=root;
+      syncPhase='checking';syncCount=0;syncPartial=false;updateSyncUI();
+      const next=new Map(),queue=[{dir:workspace,path:'',depth:0}];
+      let incomplete=false, scanned=0;
+      while(queue.length){
+        if(token!==syncGeneration||workspace!==root)return;
+        const node=queue.pop(),subdirs=[];
+        try{
+          for await(const item of node.dir.values()){
+            if(token!==syncGeneration||workspace!==root)return;
+            if(item.name.startsWith('.'))continue;
+            if(scanned>=SYNC_MAX_ENTRIES){incomplete=true;break;}
+            scanned++;
+            const path=pathJoin(node.path,item.name);
+            if(item.kind==='directory'){
+              next.set(path,{kind:'directory'});
+              if(node.depth+1<SYNC_MAX_DEPTH)subdirs.push({dir:item,path,depth:node.depth+1});
+              else incomplete=true;
+            }else{
+              try{
+                const file=await item.getFile(), stamp={size:file.size,lastModified:file.lastModified};
+                if(syncWarnings.get(path)==='error')syncWarnings.delete(path);
+                if(stampChanged(observedVersions.get(path),stamp))syncWarnings.set(path,'external');
+                observedVersions.set(path,stamp);
+                next.set(path,{kind:'file'});
+              }catch(error){syncWarnings.set(path,'error');next.set(path,{kind:'file'});console.error('Не удалось проверить файл',path,error);}
+            }
+          }
+        }catch(error){
+          if(node.path)syncWarnings.set(node.path,'error');
+          incomplete=true;console.error('Не удалось проверить директорию',node.path,error);
+        }
+        if(scanned>=SYNC_MAX_ENTRIES){incomplete=true;break;}
+        queue.push(...subdirs.reverse());
+      }
+      if(token!==syncGeneration||workspace!==root)return;
+      if(!incomplete){
+        for(const path of [...observedVersions.keys()])if(!next.has(path))observedVersions.delete(path);
+        for(const path of [...syncWarnings.keys()])if(!next.has(path))syncWarnings.delete(path);
+      }
+      checkedEntries=next;syncCount=[...next.values()].filter(entry=>entry.kind==='file').length;
+      syncPartial=incomplete;syncPhase=incomplete?'partial':'ready';
+      updateButtonStates();updateSyncUI();
+    }
+    function updateSyncUI(){
+      const states={ok:0,unknown:1,dirty:2,external:3,error:4},aggregated=new Map();
+      const ownState=path=>{
+        const warning=syncWarnings.get(path);
+        if(warning==='error')return 'error';
+        if(activePath===path&&dirty())return warning==='external'?'error':'dirty';
+        if(warning==='external')return 'external';
+        return checkedEntries.has(path)?'ok':'unknown';
+      };
+      const counts={ok:0,unknown:0,dirty:0,external:0,error:0};
+      for(const [path,item] of checkedEntries){
+        if(item.kind!=='file')continue;
+        const status=ownState(path);counts[status]++;
+        let folder=parentPath(path);
+        while(folder){if(states[status]>(states[aggregated.get(folder)]??-1))aggregated.set(folder,status);folder=parentPath(folder);}
+      }
+      if(activePath&&!checkedEntries.has(activePath)&&root&&dirty()){
+        counts.dirty++;
+        let folder=parentPath(activePath);
+        while(folder){if(states.dirty>(states[aggregated.get(folder)]??-1))aggregated.set(folder,'dirty');folder=parentPath(folder);}
+      }
+      for(const [path,status] of syncWarnings)if(checkedEntries.get(path)?.kind==='directory'){
+        if(status==='error')counts.error++;
+        if(states[status]>(states[aggregated.get(path)]??-1))aggregated.set(path,status);
+        let folder=parentPath(path);
+        while(folder){if(states[status]>(states[aggregated.get(folder)]??-1))aggregated.set(folder,status);folder=parentPath(folder);}
+      }
+      const descriptions={ok:'На диске',unknown:'Не проверен',dirty:'Не сохранено',external:'Изменён извне',error:'Ошибка или конфликт'};
+      tree.querySelectorAll('.tree-row').forEach(row=>{
+        const path=row.dataset.path,folder=row.dataset.kind==='directory';
+        const status=folder?(aggregated.get(path)||(checkedEntries.has(path)?'ok':'unknown')):ownState(path);
+        const dot=row.querySelector('.sync-dot');
+        if(dot){dot.dataset.status=status;dot.title=folder?(status==='ok'?'Содержимое папки на диске':descriptions[status]+' во вложенных файлах'):descriptions[status];}
+        row.title=(folder?'Папка: ':'Файл: ')+path+' · '+descriptions[status];
+      });
+      const total=counts.ok+counts.unknown+counts.dirty+counts.external+counts.error;
+      let summary='На диске · '+total;
+      let level='ok';
+      if(!root){summary='Нет каталога';level='unknown';}
+      else if(syncPhase==='checking'){summary='Проверка…';level='checking';}
+      else if(counts.error){summary='Ошибки: '+counts.error;level='error';}
+      else if(counts.external){summary='Извне: '+counts.external;level='external';}
+      else if(counts.dirty){summary='Не сохранено: '+counts.dirty;level='dirty';}
+      else if(syncPartial){summary='Частично · '+total;level='unknown';}
+      $('syncSummary').dataset.status=level;
+      $('syncSummaryText').textContent=summary;
+      $('syncSummary').title=summary+'. Статус проверяется при открытии папки и по кнопке обновления. Никакой облачной синхронизации нет.';
     }
     function maybeDiscard() {return !dirty()||confirm('Есть несохранённые изменения. Продолжить без сохранения?');}
+    function updateButtonStates(){
+      $('saveBtn').disabled=busy||(Boolean(currentHandle)&&!dirty());
+      $('undoBtn').disabled=busy||undoStack.length===0;
+      $('redoBtn').disabled=busy||redoStack.length===0;
+      updateFolderToggle();
+    }
     function setBusy(value) {
       busy=value;
       for(const id of fileButtons){const button=$(id);if(button)button.disabled=value||(treeTools.has(id)&&!root);}
+      updateButtonStates();
     }
     function syncSelection(){
       tree.querySelectorAll('.tree-row').forEach(row=>{
@@ -394,7 +553,7 @@
     themeMedia.addEventListener('change',()=>{if(themeChoice==='system')applyTheme('system');});
     function resetDocument(){
       currentHandle=null;activePath=null;filename='Без названия.txt';savedText='';eol='\n';knownVersion=null;
-      editor.value='';update();syncSelection();
+      editor.value='';resetHistory();update();syncSelection();
     }
     function newDocument(){if(busy||!maybeDiscard())return;resetDocument();editor.focus();notice('Создан новый документ. Сохраните его на диск.');}
     async function readDocument(handle,path=null,skipWarnings=false){
@@ -404,6 +563,8 @@
       if(!skipWarnings&&raw.includes('\0')&&!confirm('Похоже, это двоичный файл. Открыть его как текст?'))return false;
       currentHandle=handle; activePath=path; filename=handle.name; eol=raw.includes('\r\n')?'\r\n':'\n';
       editor.value=raw; savedText=editor.value; knownVersion={size:file.size,lastModified:file.lastModified};
+      resetHistory();
+      if(path!==null){observedVersions.set(path,{size:file.size,lastModified:file.lastModified});syncWarnings.delete(path);}
       if(path!==null){selectedPath=path;selectedKind='file';}
       else{selectedPath=null;selectedKind=null;}
       update();syncSelection();return true;
@@ -420,7 +581,7 @@
       catch(error){showError(error);}
     }
     async function save(saveAs=false){
-      if(busy||!requireApi(['showSaveFilePicker']))return;
+      if(busy||(!saveAs&&currentHandle&&!dirty())||!requireApi(['showSaveFilePicker']))return;
       let target=currentHandle, created=false;
       if(saveAs||!target){
         try{const pending=window.showSaveFilePicker({id:'list-save',suggestedName:filename,
@@ -432,6 +593,7 @@
       try{
         if(!created&&knownVersion){const disk=await target.getFile();
           if(disk.size!==knownVersion.size||disk.lastModified!==knownVersion.lastModified){
+            if(activePath)syncWarnings.set(activePath,'external');updateSyncUI();
             if(!confirm('Файл изменён другой программой. Перезаписать его?'))return;
           }
         }
@@ -444,9 +606,10 @@
           if(root?.resolve){try{const path=await root.resolve(target);if(path)activePath=path.join('/');}catch{}}
           selectedPath=activePath;selectedKind=activePath?'file':null;
         }
+        if(activePath){observedVersions.set(activePath,knownVersion);syncWarnings.delete(activePath);}
         update();syncSelection();if(root)await refreshTree();
         notice(dirty()?'Сохранено; появились новые изменения.':'Файл сохранён на диске.','success');
-      }catch(error){showError(error);}finally{setBusy(false);}
+      }catch(error){if(activePath)syncWarnings.set(activePath,'error');updateSyncUI();showError(error);}finally{setBusy(false);}
     }
     async function directoryAt(path=''){
       if(!root)throw new Error('Рабочая папка не выбрана');
@@ -481,7 +644,7 @@
       try{await renderEntries(root,tree,'',0,version);if(treeVersion===version&&!tree.children.length){const hint=document.createElement('div');hint.className='tree-empty';hint.textContent='Папка пуста';tree.append(hint);}}
       catch(error){showError(error);}syncSelection();
     }
-    async function refreshTree(){await reloadWorkspace();}
+    async function refreshTree(){await reloadWorkspace();await scanWorkspace();}
     const SORT_OPTIONS = ['folders-asc','folders-desc','name-asc','name-desc'];
     function readSortOrder(){
       try{const preference=localStorage.getItem('list-sort-order');return SORT_OPTIONS.includes(preference)?preference:'folders-asc';}
@@ -546,8 +709,19 @@
       try{expanded.clear();await refreshTree();tree.scrollTop=0;notice('Все папки свёрнуты.','success');}
       catch(error){showError(error);}finally{setBusy(false);}
     }
-    $('expandAllBtn').addEventListener('click',expandAllFolders);
-    $('collapseAllBtn').addEventListener('click',collapseAllFolders);
+    function updateFolderToggle(){
+      const folders=[...checkedEntries].filter(([,entry])=>entry.kind==='directory').map(([path])=>path);
+      const allExpanded=folders.length>0&&folders.every(path=>expanded.has(path));
+      const toggle=$('foldersToggleBtn'),mode=allExpanded?'collapse':'expand';
+      toggle.dataset.mode=mode;
+      const label=allExpanded?'Свернуть все папки':'Раскрыть все папки';
+      toggle.title=label;toggle.setAttribute('aria-label',label);
+      toggle.disabled=busy||!root||(!folders.length&&syncPhase==='ready');
+    }
+    $('foldersToggleBtn').addEventListener('click',()=>{
+      if($('foldersToggleBtn').dataset.mode==='collapse')collapseAllFolders();
+      else expandAllFolders();
+    });
     function svgIcon(kind){
       const d={folder:'M3 8a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v9H3V8Z',file:'M7 3h8l4 4v14H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z',chevron:'m9 6 6 6-6 6'};
       const svg=document.createElementNS(svgNS,'svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('fill','none');svg.setAttribute('stroke','currentColor');svg.setAttribute('stroke-width','1.7');svg.setAttribute('stroke-linecap','round');svg.setAttribute('stroke-linejoin','round');
@@ -564,12 +738,13 @@
         const row=document.createElement('div');row.className='tree-row';row.dataset.path=p;row.dataset.kind=item.kind;
         row.style.paddingLeft=(depth*15)+'px';
         const b=document.createElement('button');b.type='button';b.className='tree-entry';b.title=p;
-        if(isFolder){b.setAttribute('aria-expanded',String(expanded.has(p)));b.append(svgIcon('chevron'));}
+        if(isFolder){b.setAttribute('aria-expanded',String(expanded.has(p)));const chevron=svgIcon('chevron');chevron.classList.add('twisty');b.append(chevron);}
         else{const gap=document.createElement('span');gap.style.cssText='width:12px;flex:0 0 12px';b.append(gap);}
         b.append(svgIcon(isFolder?'folder':'file'));
         const label=document.createElement('span');label.className='entry-label';label.textContent=item.name;b.append(label);
+        const indicator=document.createElement('span');indicator.className='sync-dot';indicator.dataset.status='unknown';indicator.setAttribute('aria-hidden','true');
         const more=document.createElement('button');more.className='row-more';more.type='button';more.textContent='⋯';more.title='Действия с '+item.name;more.setAttribute('aria-label','Действия с '+item.name);
-        row.append(b,more);parent.append(row);
+        row.append(b,indicator,more);parent.append(row);
         const children=document.createElement('div');children.hidden=!expanded.has(p);if(isFolder)parent.append(children);
         const toggle=async()=>{
           if(!isFolder)return openFile(item,p);
@@ -577,6 +752,7 @@
           const open=!expanded.has(p);
           if(open)expanded.add(p);else expanded.delete(p);
           children.hidden=!open;b.setAttribute('aria-expanded',String(open));
+          updateFolderToggle();updateSyncUI();
           if(open){children.replaceChildren();try{await renderEntries(item,children,p,depth+1,version);if(!children.children.length){const n=document.createElement('div');n.className='tree-empty';n.textContent='Папка пуста';children.append(n);}}catch(error){showError(error);}}
         };
         b.addEventListener('click',toggle);
@@ -598,6 +774,7 @@
       if(busy)return;
       setBusy(true);
       try{root=directory;selectedPath=null;selectedKind=null;
+        syncGeneration++;checkedEntries.clear();observedVersions.clear();syncWarnings.clear();syncPhase='idle';syncPartial=false;syncCount=0;
         expanded.clear();treeVersion++;$('workspaceLabel').textContent=directory.name;
         $('workspaceBtn').title=directory.name+' · сменить рабочую директорию';
         // Previously opened document stays visible, but its path no longer refers to this workspace.
@@ -620,8 +797,7 @@
         const dir=await directoryAt(destPath);if(await entryExists(dir,value))return notice('Объект с таким именем уже существует.','error');
         const h=await dir.getFileHandle(value,{create:true});
         currentHandle=h;activePath=pathJoin(destPath,value);selectedPath=activePath;selectedKind='file';
-        editor.value='';savedText='';filename=value;knownVersion=null;eol='\n';
-        if(destPath)expanded.add(destPath);
+        editor.value='';savedText='';filename=value;knownVersion=null;eol='\n';resetHistory();        if(destPath)expanded.add(destPath);
         await refreshTree();update();editor.focus();notice('Создан файл «'+value+'».','success');
       }catch(error){showError(error);}finally{setBusy(false);}
     }
@@ -818,14 +994,26 @@
     $('inlineChooseBtn').addEventListener('click',chooseWorkspace);
     $('refreshBtn').addEventListener('click',refreshTree);
     $('saveBtn').addEventListener('click',()=>save());
-    $('undoBtn').addEventListener('click',()=>{editor.focus();document.execCommand('undo');update();});
-    $('redoBtn').addEventListener('click',()=>{editor.focus();document.execCommand('redo');update();});
-    editor.addEventListener('input',update);
-    editor.addEventListener('keydown',e=>{if(e.key==='Tab'){e.preventDefault();editor.setRangeText('  ',editor.selectionStart,editor.selectionEnd,'end');update();}});
+    $('undoBtn').addEventListener('click',undoEdit);
+    $('redoBtn').addEventListener('click',redoEdit);
+    editor.addEventListener('beforeinput',event=>{
+      if(event.inputType==='historyUndo'){event.preventDefault();undoEdit();return;}
+      if(event.inputType==='historyRedo'){event.preventDefault();redoEdit();return;}
+      pendingSelection={start:editor.selectionStart,end:editor.selectionEnd};
+    });
+    editor.addEventListener('input',recordEdit);
+    editor.addEventListener('keydown',e=>{
+      if(e.key==='Tab'){
+        e.preventDefault();pendingSelection={start:editor.selectionStart,end:editor.selectionEnd};
+        editor.setRangeText('  ',editor.selectionStart,editor.selectionEnd,'end');recordEdit();
+      }
+    });
     document.addEventListener('keydown',e=>{
       const mod=e.ctrlKey||e.metaKey;if(!mod||e.altKey)return;
       const k=e.key.toLowerCase();
-      if(k==='s'){e.preventDefault();save(e.shiftKey);}
+      if(k==='z'&&e.target===editor){e.preventDefault();if(e.shiftKey)redoEdit();else undoEdit();}
+      else if(k==='y'&&e.target===editor){e.preventDefault();redoEdit();}
+      else if(k==='s'){e.preventDefault();save(e.shiftKey);}
       else if(k==='o'){e.preventDefault();openPicker();}
       else if(k==='n'){e.preventDefault();newDocument();}
     });
