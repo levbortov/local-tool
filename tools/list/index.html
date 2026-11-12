@@ -797,7 +797,8 @@
         const dir=await directoryAt(destPath);if(await entryExists(dir,value))return notice('Объект с таким именем уже существует.','error');
         const h=await dir.getFileHandle(value,{create:true});
         currentHandle=h;activePath=pathJoin(destPath,value);selectedPath=activePath;selectedKind='file';
-        editor.value='';savedText='';filename=value;knownVersion=null;eol='\n';resetHistory();        if(destPath)expanded.add(destPath);
+        editor.value='';savedText='';filename=value;knownVersion=null;eol='\n';resetHistory();
+        if(destPath)expanded.add(destPath);
         await refreshTree();update();editor.focus();notice('Создан файл «'+value+'».','success');
       }catch(error){showError(error);}finally{setBusy(false);}
     }
