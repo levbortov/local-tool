@@ -72,7 +72,14 @@
     .workspace-trigger.root-drop .workspace-label::after {content:' · в корень'; font-size:11px; color:var(--accent); font-weight:550;}
     .tree-empty {color:var(--muted); font-size:11.5px; padding:9px 15px;}
     .aside-foot {height:var(--footer-height); flex:0 0 var(--footer-height); border-top:1px solid var(--line); padding:0 14px; display:flex; align-items:center;}
-    .explorer-actions {display:flex; align-items:center; gap:8px;}
+    .explorer-actions {display:flex; align-items:center; gap:8px; width:100%;}
+    .toolbar-spacer {flex:1; min-width:0;}
+    .sort-menu {position:fixed; z-index:75; width:235px; padding:7px; border:1px solid var(--line); border-radius:11px; background:var(--surface); box-shadow:0 18px 50px rgba(0,0,0,.15);}
+    .sort-menu[hidden] {display:none;}
+    .sort-menu .menu-heading {display:block; padding:7px 10px 9px; color:var(--muted); font-size:11px; font-weight:600;}
+    .sort-menu label {display:flex; align-items:center; gap:10px; cursor:pointer; border-radius:8px; padding:10px; font-size:12px;}
+    .sort-menu label:hover {background:var(--hover);}
+    .sort-menu input {margin:0; accent-color:var(--accent);}
     .explorer-actions .icon-btn {height:30px; width:31px; flex-basis:31px;}
     .editor-pane {flex:1; display:flex; flex-direction:column; min-width:0; min-height:0;}
     .editor-head {height:68px; flex:0 0 68px; border-bottom:1px solid var(--line); display:grid; grid-template-columns:1fr minmax(140px, 2fr) 1fr; align-items:center; gap:12px; padding:0 20px;}
@@ -183,12 +190,29 @@
       </div>
       <footer class="aside-foot">
         <div class="explorer-actions">
+          <button class="icon-btn" id="expandAllBtn" type="button" title="Раскрыть все папки" aria-label="Раскрыть все папки" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m8 5 4 4 4-4M8 15l4 4 4-4"/><path d="M5 12h14"/></svg>
+          </button>
+          <button class="icon-btn" id="collapseAllBtn" type="button" title="Свернуть все папки" aria-label="Свернуть все папки" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m8 9 4-4 4 4M8 15l4 4 4-4"/><path d="M5 12h14"/></svg>
+          </button>
+          <span class="toolbar-spacer" aria-hidden="true"></span>
+          <button class="icon-btn" id="sortBtn" type="button" title="Сортировать файлы и папки" aria-label="Сортировать файлы и папки" aria-haspopup="true" aria-expanded="false" aria-controls="sortMenu" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h11M4 12h8M4 17h5"/><path d="m16 14 3 3 3-3M19 17V5"/></svg>
+          </button>
           <button class="icon-btn" id="refreshBtn" title="Обновить список файлов" aria-label="Обновить список файлов" disabled>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 6"/><path d="M20 4v7h-7"/></svg>
           </button>
         </div>
       </footer>
     </aside>
+    <div class="sort-menu" id="sortMenu" role="group" aria-label="Сортировка проводника" hidden>
+      <span class="menu-heading">Сортировать</span>
+      <label><input type="radio" name="sort-order" value="folders-asc"> Папки сначала · А–Я</label>
+      <label><input type="radio" name="sort-order" value="folders-desc"> Папки сначала · Я–А</label>
+      <label><input type="radio" name="sort-order" value="name-asc"> По имени · А–Я</label>
+      <label><input type="radio" name="sort-order" value="name-desc"> По имени · Я–А</label>
+    </div>
     <div class="sidebar-resizer" id="sidebarResizer" role="separator" tabindex="0" aria-label="Изменить ширину проводника" aria-orientation="vertical" aria-controls="sidebar" aria-valuemin="220" aria-valuemax="620" aria-valuenow="315" title="Перетащите для изменения ширины; стрелки — с клавиатуры"></div>
     <div class="scrim" id="scrim" aria-hidden="true"></div>
       <div class="theme-menu" id="themeMenu" role="group" aria-label="Выбор темы" hidden>
@@ -226,7 +250,8 @@
     const $ = id => document.getElementById(id);
     const shell = $('shell'), editor = $('editor'), tree = $('tree'), titleInput = $('documentName');
     const svgNS = 'http://www.w3.org/2000/svg';
-    const fileButtons = ['workspaceBtn','inlineChooseBtn','saveBtn','refreshBtn'];
+    const fileButtons = ['workspaceBtn','inlineChooseBtn','saveBtn','refreshBtn','expandAllBtn','collapseAllBtn','sortBtn'];
+    const treeTools = new Set(['refreshBtn','expandAllBtn','collapseAllBtn','sortBtn']);
     let root = null, selectedPath = null, selectedKind = null, activePath = null, currentHandle = null;
     let filename = 'Без названия.txt', savedText = '', eol = '\n', knownVersion = null;
     let busy = false, treeVersion = 0, titleEditing = false, dismissTitleChange = false, messageTimer = null;
@@ -266,7 +291,7 @@
     function maybeDiscard() {return !dirty()||confirm('Есть несохранённые изменения. Продолжить без сохранения?');}
     function setBusy(value) {
       busy=value;
-      for(const id of fileButtons){const button=$(id);if(button)button.disabled=value||(id==='refreshBtn'&&!root);}
+      for(const id of fileButtons){const button=$(id);if(button)button.disabled=value||(treeTools.has(id)&&!root);}
     }
     function syncSelection(){
       tree.querySelectorAll('.tree-row').forEach(row=>{
@@ -457,6 +482,72 @@
       catch(error){showError(error);}syncSelection();
     }
     async function refreshTree(){await reloadWorkspace();}
+    const SORT_OPTIONS = ['folders-asc','folders-desc','name-asc','name-desc'];
+    function readSortOrder(){
+      try{const preference=localStorage.getItem('list-sort-order');return SORT_OPTIONS.includes(preference)?preference:'folders-asc';}
+      catch{return 'folders-asc';}
+    }
+    let sortOrder=readSortOrder();
+    function compareEntries(a,b){
+      if(sortOrder.startsWith('folders-')&&a.kind!==b.kind)return a.kind==='directory'?-1:1;
+      const comparison=a.name.localeCompare(b.name,'ru',{numeric:true});
+      return sortOrder.endsWith('-desc')?-comparison:comparison;
+    }
+    const sortBtn=$('sortBtn'),sortMenu=$('sortMenu');
+    function closeSortMenu(){sortMenu.hidden=true;sortBtn.setAttribute('aria-expanded','false');}
+    sortBtn.addEventListener('click',()=>{
+      if(!root||busy)return;
+      const opening=sortMenu.hidden;
+      closeThemeMenu();closeMenu();
+      if(!opening){closeSortMenu();return;}
+      for(const input of sortMenu.querySelectorAll('input[name="sort-order"]'))input.checked=input.value===sortOrder;
+      sortMenu.hidden=false;sortBtn.setAttribute('aria-expanded','true');
+      const rect=sortBtn.getBoundingClientRect(), w=sortMenu.offsetWidth, h=sortMenu.offsetHeight;
+      sortMenu.style.left=Math.max(8,Math.min(rect.right-w,window.innerWidth-w-8))+'px';
+      sortMenu.style.top=Math.max(8,rect.top-h-8)+'px';
+    });
+    sortMenu.addEventListener('change',async event=>{
+      const choice=event.target;
+      if(!choice.matches('input[name="sort-order"]')||!SORT_OPTIONS.includes(choice.value))return;
+      sortOrder=choice.value;
+      try{localStorage.setItem('list-sort-order',sortOrder);}catch{}
+      closeSortMenu();sortBtn.focus();
+      try{await refreshTree();}catch(error){showError(error);}
+    });
+    const EXPAND_LIMIT=1000, EXPAND_DEPTH_LIMIT=20;
+    async function expandAllFolders(){
+      if(!root||busy)return;
+      closeSortMenu();setBusy(true);
+      const paths=[], stack=[{dir:root,path:'',depth:0}];
+      let incomplete=false;
+      try{
+        while(stack.length){
+          const current=stack.pop();
+          const directories=[];
+          for await(const item of current.dir.values()){
+            if(item.kind!=='directory'||item.name.startsWith('.'))continue;
+            const path=pathJoin(current.path,item.name);
+            if(paths.length>=EXPAND_LIMIT){incomplete=true;break;}
+            paths.push(path);
+            if(current.depth+1<EXPAND_DEPTH_LIMIT)directories.push({dir:item,path,depth:current.depth+1});
+            else incomplete=true;
+          }
+          if(incomplete&&paths.length>=EXPAND_LIMIT)break;
+          stack.push(...directories.reverse());
+        }
+        expanded.clear();for(const path of paths)expanded.add(path);
+        await refreshTree();
+        notice(incomplete?'Раскрыты первые '+paths.length+' папок. Для больших деревьев действует ограничение на глубину и количество.':'Раскрыты все папки.','success');
+      }catch(error){showError(error);}finally{setBusy(false);}
+    }
+    async function collapseAllFolders(){
+      if(!root||busy)return;
+      closeSortMenu();setBusy(true);
+      try{expanded.clear();await refreshTree();tree.scrollTop=0;notice('Все папки свёрнуты.','success');}
+      catch(error){showError(error);}finally{setBusy(false);}
+    }
+    $('expandAllBtn').addEventListener('click',expandAllFolders);
+    $('collapseAllBtn').addEventListener('click',collapseAllFolders);
     function svgIcon(kind){
       const d={folder:'M3 8a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v9H3V8Z',file:'M7 3h8l4 4v14H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z',chevron:'m9 6 6 6-6 6'};
       const svg=document.createElementNS(svgNS,'svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('fill','none');svg.setAttribute('stroke','currentColor');svg.setAttribute('stroke-width','1.7');svg.setAttribute('stroke-linecap','round');svg.setAttribute('stroke-linejoin','round');
@@ -467,7 +558,7 @@
       // For cross-platform consistency, dot-prefixed entries are not shown.
       const items=[];for await(const item of dir.values())if(!item.name.startsWith('.'))items.push(item);
       if(version!==treeVersion)return;
-      items.sort((a,b)=>a.kind===b.kind?a.name.localeCompare(b.name,'ru',{numeric:true}):a.kind==='directory'?-1:1);
+      items.sort(compareEntries);
       for(const item of items){
         const p=pathJoin(path,item.name), isFolder=item.kind==='directory';
         const row=document.createElement('div');row.className='tree-row';row.dataset.path=p;row.dataset.kind=item.kind;
@@ -689,8 +780,8 @@
       const action=e.target.closest('button')?.dataset.action;if(!action)return;closeMenu();
       ({'new-file':createFile,'new-folder':createFolder,rename:renameSelected,move:moveSelected,'move-root':()=>moveEntry(selectedPath,''),delete:deleteSelected})[action]();
     });
-    document.addEventListener('pointerdown',e=>{if(!menu.contains(e.target)&&!e.target.closest('.row-more'))closeMenu();if(!themeMenu.contains(e.target)&&!themeBtn.contains(e.target)&&!themeFallbackBtn.contains(e.target))closeThemeMenu();});
-    document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMenu();closeThemeMenu();if(media.matches)setSidebar(false);}});
+    document.addEventListener('pointerdown',e=>{if(!menu.contains(e.target)&&!e.target.closest('.row-more'))closeMenu();if(!themeMenu.contains(e.target)&&!themeBtn.contains(e.target)&&!themeFallbackBtn.contains(e.target))closeThemeMenu();if(!sortMenu.contains(e.target)&&!sortBtn.contains(e.target))closeSortMenu();});
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMenu();closeThemeMenu();closeSortMenu();if(media.matches)setSidebar(false);}});
     // The blank area and workspace header represent the root context.
     function openRootContextMenu(event){
       if(!root||busy)return;
