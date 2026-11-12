@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Лист — локальный текстовый редактор</title>
+  <style>
+    :root {
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color-scheme: light;
+      --bg: #f6f6f3;
+      --paper: #fff;
+      --ink: #262822;
+      --muted: #85867e;
+      --line: #e7e8e2;
+      --accent: #315d43;
+      --accent-hover: #254936;
+      --soft: #f0f2ec;
+      --warn: #b3742d;
+      --shadow: 0 15px 50px rgba(45,50,37,.045);
+    }
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; margin: 0; }
+    body { background: var(--bg); color: var(--ink); }
+    button, textarea { font: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+    .app { width: min(1120px, 100%); min-height: 100dvh; padding: 32px 40px 24px; margin: auto; display: flex; flex-direction: column; gap: 22px; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; gap: 18px; flex-wrap:wrap; }
+    .brand { display:flex; align-items:center; gap: 12px; }
+    .brand-mark { width: 35px; height: 35px; flex: 0 0 auto; border-radius: 11px; background: var(--accent); display:grid; place-items:center; color:white; }
+    .brand strong { font-size: 18px; font-weight: 675; letter-spacing: -.045em; }
+    .brand small { display:block; color: var(--muted); font-size:11px; font-weight:500; letter-spacing:.02em; margin-top:2px; }
+    .actions { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+    .btn { display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:37px; border-radius:9px; border:1px solid var(--line); padding:8px 13px; background:var(--paper); color:var(--ink); font-size:12.5px; font-weight:600; white-space:nowrap; }
+    .btn:hover:not(:disabled) { background:#f9faf7; border-color:#d4d8d0; }
+    .btn.primary { background:var(--accent); color:white; border-color:var(--accent); }
+    .btn.primary:hover:not(:disabled) { background:var(--accent-hover); }
+    .btn:disabled { opacity: .6; cursor: wait; }
+    .btn svg { width:15px; height:15px; stroke-width:1.9; }
+    .document { min-height: 400px; flex:1; display:flex; flex-direction:column; background:var(--paper); border:1px solid var(--line); border-radius:18px; box-shadow:var(--shadow); overflow:hidden; }
+    .doc-heading { display:flex; align-items:center; justify-content:space-between; padding:20px 27px 18px; gap:16px; border-bottom:1px solid var(--line); }
+    .file-details { min-width:0; display:flex; align-items:center; gap:12px; }
+    .file-icon { display:grid; place-items:center; flex:0 0 auto; width:37px; height:41px; border-radius:8px; color:var(--accent); background:var(--soft); }
+    .file-icon svg { width:19px; height:19px; stroke-width:1.65; }
+    .file-title { margin:0; font-size:17px; font-weight:650; letter-spacing:-.035em; text-overflow:ellipsis; overflow:hidden; white-space:nowrap; }
+    .file-description { margin:5px 0 0; font-size:12px; color:var(--muted); }
+    .save-state { flex:0 0 auto; display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted); }
+    .dot { width:7px; height:7px; border-radius:50%; background:#94aa99; }
+    .save-state.dirty .dot { background:#d4a055; }
+    .save-state.dirty { color:var(--warn); }
+    .editor-area { display:flex; flex:1; min-height:350px; position:relative; }
+    #editor { width:100%; height:100%; min-height:350px; flex:1; display:block; border:0; border-radius:0; resize:none; outline:none; padding:27px 32px 40px; background:transparent; color:var(--ink); font: 14.5px/1.85 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; letter-spacing:-.02em; tab-size:2; white-space:pre; overflow:auto; }
+    #editor::placeholder { color:#b1b5ae; opacity:1; }
+    #editor:focus-visible { outline:none; }
+    .doc-footer { border-top:1px solid var(--line); padding:12px 27px; display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; font-size:11.5px; color:var(--muted); }
+    .metrics { display:flex; align-items:center; flex-wrap:wrap; gap:16px; font-variant-numeric:tabular-nums; }
+    .footnote { display:flex; align-items:center; gap:7px; font-size:11.5px; color:var(--muted); }
+    .footnote svg { width:14px; height:14px; }
+    .helper { margin:0; min-height:18px; font-size:12px; color:var(--muted); text-align:center; }
+    .helper.error { color:#a34239; }
+    .helper.success { color:var(--accent); }
+    @media (max-width: 650px) {
+      .app { padding: 19px 12px 16px; gap:14px; }
+      .brand { margin-left:3px; }
+      .topbar { align-items:flex-start; }
+      .actions { width:100%; gap:6px; }
+      .btn { flex:1; padding:9px 8px; font-size:12px; }
+      .doc-heading { padding:16px 15px; }
+      .file-title { font-size:15px; }
+      .save-state span:last-child { display:none; }
+      #editor { padding:18px 17px 30px; font-size:13.5px; }
+      .doc-footer { padding:12px 15px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5h8l4 4V20a1 1 0 0 1-1 1H7a2 2 0 0 1-2-2V5.5a2 2 0 0 1 2-2Z"/><path d="M14.5 3.5V8H19M9 12h6M9 16h6"/></svg>
+        </div>
+        <div><strong>Лист</strong><small>Локальный текстовый редактор</small></div>
+      </div>
+      <div class="actions" role="group" aria-label="Работа с файлами">
+        <button class="btn" id="newBtn" type="button" title="Новый документ (Ctrl/⌘+N)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>Новый
+        </button>
+        <button class="btn" id="openBtn" type="button" title="Открыть файл (Ctrl/⌘+O)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M3 11h18"/></svg>Открыть
+        </button>
+        <button class="btn" id="saveAsBtn" type="button" title="Сохранить под другим именем (Ctrl/⌘+Shift+S)">Сохранить как…</button>
+        <button class="btn primary" id="saveBtn" type="button" title="Сохранить (Ctrl/⌘+S)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h12l4 4v14H3V3h2Z"/><path d="M7 3v7h10V3M7 21v-8h10v8"/></svg>Сохранить
+        </button>
+      </div>
+    </header>
+
+    <section class="document" aria-label="Текстовый документ">
+      <div class="doc-heading">
+        <div class="file-details">
+          <div class="file-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l5 5v12a1 1 0 0 1-1 1H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v6h5M9 13h6M9 17h6"/></svg></div>
+          <div style="min-width:0"><h1 class="file-title" id="fileName">Без названия.txt</h1><p class="file-description" id="fileDescription">Новый текстовый документ</p></div>
+        </div>
+        <div class="save-state" id="saveState" aria-live="polite"><span class="dot"></span><span id="stateText">Без изменений</span></div>
+      </div>
+      <div class="editor-area">
+        <textarea id="editor" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" aria-label="Содержимое текстового файла" placeholder="Начните печатать или откройте текстовый файл…"></textarea>
+      </div>
+      <div class="doc-footer">
+        <div class="metrics"><span id="lineCount">1 строка</span><span id="wordCount">0 слов</span><span id="charCount">0 символов</span></div>
+        <div>Обычный текст · UTF-8</div>
+      </div>
+    </section>
+
+    <p class="helper" id="helper" role="status" aria-live="polite">Файлы остаются на вашем компьютере. Сервер не используется.</p>
+  </main>
+
+  <script>
+    'use strict';
+    const editor = document.getElementById('editor');
+    const fileName = document.getElementById('fileName');
+    const fileDescription = document.getElementById('fileDescription');
+    const state = document.getElementById('saveState');
+    const stateText = document.getElementById('stateText');
+    const helper = document.getElementById('helper');
+    const actions = ['newBtn','openBtn','saveBtn','saveAsBtn'].map(id => document.getElementById(id));
+    let handle = null;
+    let savedText = '';
+    let eol = '\n';
+    let knownVersion = null;
+    let busy = false;
+    let filename = 'Без названия.txt';
+    let hintTimer;
+
+    function plural(n, one, few, many) {
+      const mod100 = n % 100, mod10 = n % 10;
+      return n + ' ' + (mod100 >= 11 && mod100 <= 14 ? many : mod10 === 1 ? one : (mod10 >= 2 && mod10 <= 4 ? few : many));
+    }
+    function dirty() { return editor.value !== savedText; }
+    function update() {
+      const changed = dirty();
+      state.classList.toggle('dirty', changed);
+      stateText.textContent = changed ? 'Не сохранено' : 'Сохранено';
+      fileName.textContent = filename;
+      document.title = (changed ? '● ' : '') + filename + ' — Лист';
+      const value = editor.value;
+      const lines = value.split('\n').length;
+      const words = (value.trim().match(/\S+/g) || []).length;
+      document.getElementById('lineCount').textContent = plural(lines, 'строка', 'строки', 'строк');
+      document.getElementById('wordCount').textContent = plural(words, 'слово', 'слова', 'слов');
+      document.getElementById('charCount').textContent = plural(Array.from(value).length, 'символ', 'символа', 'символов');
+    }
+    function notice(message, type = '') {
+      clearTimeout(hintTimer);
+      helper.textContent = message;
+      helper.className = 'helper' + (type ? ' ' + type : '');
+      if (type === 'success') hintTimer = setTimeout(() => notice('Файлы остаются на вашем компьютере. Сервер не используется.'), 5000);
+    }
+    function maybeDiscard() { return !dirty() || window.confirm('Есть несохранённые изменения. Продолжить без сохранения?'); }
+    function setBusy(value) {
+      busy = value;
+      actions.forEach(button => { button.disabled = value; });
+    }
+    function isCancelled(error) { return error && error.name === 'AbortError'; }
+    function showError(error) {
+      if (isCancelled(error)) return;
+      if (error?.name === 'NotAllowedError') notice('Доступ к файлу не разрешён. Разрешите запись в диалоге браузера.', 'error');
+      else notice('Ошибка: ' + (error?.message || String(error)), 'error');
+      console.error(error);
+    }
+    function requireApi() {
+      if ('showOpenFilePicker' in window && 'showSaveFilePicker' in window && window.isSecureContext) return true;
+      notice('Нужен Chrome или Edge с поддержкой File System Access API. Откройте этот HTML-файл непосредственно в браузере.', 'error');
+      return false;
+    }
+    async function newDocument() {
+      if (busy || !maybeDiscard()) return;
+      handle = null;
+      knownVersion = null;
+      savedText = '';
+      eol = '\n';
+      filename = 'Без названия.txt';
+      editor.value = '';
+      fileDescription.textContent = 'Новый текстовый документ';
+      update(); editor.focus();
+      notice('Новый документ создан. Для записи на диск нажмите «Сохранить».');
+    }
+    async function openDocument() {
+      if (busy || !maybeDiscard() || !requireApi()) return;
+      setBusy(true);
+      try {
+        const [selected] = await window.showOpenFilePicker({ multiple: false, id: 'list-open' });
+        const file = await selected.getFile();
+        if (file.size > 10 * 1024 * 1024 && !window.confirm('Файл больше 10 МБ. Открытие может замедлить редактор. Продолжить?')) return;
+        const raw = await file.text();
+        if (raw.includes('\0') && !window.confirm('Похоже, это двоичный файл. Открыть его как текст?')) return;
+        handle = selected;
+        knownVersion = { lastModified: file.lastModified, size: file.size };
+        filename = selected.name;
+        eol = raw.includes('\r\n') ? '\r\n' : '\n';
+        editor.value = raw;
+        savedText = editor.value;
+        fileDescription.textContent = 'Открыт с вашего компьютера';
+        update(); editor.focus();
+        notice('Файл открыт. Изменения можно сохранить в тот же файл.', 'success');
+      } catch (error) { showError(error); }
+      finally { setBusy(false); }
+    }
+    async function saveDocument(saveAs = false) {
+      if (busy || !requireApi()) return;
+      // Prompt before any await: file picker requires a direct user gesture.
+      let target = handle;
+      let chosenNewHandle = false;
+      if (saveAs || !target) {
+        try {
+          target = await window.showSaveFilePicker({
+            id: 'list-save', suggestedName: filename,
+            types: [{ description: 'Текстовые файлы', accept: { 'text/plain': ['.txt', '.md', '.csv', '.log', '.json', '.xml', '.yaml', '.yml'] } }]
+          });
+          chosenNewHandle = true;
+        } catch (error) { showError(error); return; }
+      }
+      setBusy(true);
+      const snapshot = editor.value;
+      try {
+        // Warn if another application changed the opened file since the last read/save.
+        if (!chosenNewHandle && knownVersion) {
+          const disk = await target.getFile();
+          if (disk.lastModified !== knownVersion.lastModified || disk.size !== knownVersion.size) {
+            if (!window.confirm('Файл изменён другой программой после открытия. Перезаписать внешние изменения?')) return;
+          }
+        }
+        const writable = await target.createWritable();
+        try {
+          await writable.write(snapshot.replace(/\n/g, eol));
+          await writable.close();
+        } catch (error) {
+          try { await writable.abort(); } catch (_) { /* Stream may already be closed. */ }
+          throw error;
+        }
+        handle = target;
+        filename = target.name;
+        const disk = await target.getFile();
+        knownVersion = { lastModified: disk.lastModified, size: disk.size };
+        savedText = snapshot;
+        fileDescription.textContent = 'Открыт с вашего компьютера';
+        update();
+        notice(dirty() ? 'Сохранено. Есть новые несохранённые изменения.' : 'Изменения записаны в файл на диске.', 'success');
+      } catch (error) { showError(error); }
+      finally { setBusy(false); }
+    }
+    document.getElementById('newBtn').addEventListener('click', newDocument);
+    document.getElementById('openBtn').addEventListener('click', openDocument);
+    document.getElementById('saveBtn').addEventListener('click', () => saveDocument());
+    document.getElementById('saveAsBtn').addEventListener('click', () => saveDocument(true));
+    editor.addEventListener('input', update);
+    editor.addEventListener('keydown', event => {
+      if (event.key === 'Tab') {
+        event.preventDefault();
+        const start = editor.selectionStart, end = editor.selectionEnd;
+        editor.setRangeText('  ', start, end, 'end'); update();
+      }
+    });
+    document.addEventListener('keydown', event => {
+      const mod = event.metaKey || event.ctrlKey;
+      if (!mod || event.altKey) return;
+      const key = event.key.toLowerCase();
+      if (key === 's') { event.preventDefault(); saveDocument(event.shiftKey); }
+      else if (key === 'o') { event.preventDefault(); openDocument(); }
+      else if (key === 'n') { event.preventDefault(); newDocument(); }
+    });
+    window.addEventListener('beforeunload', event => {
+      if (dirty()) { event.preventDefault(); event.returnValue = ''; }
+    });
+    update();
+    if (!('showOpenFilePicker' in window) || !('showSaveFilePicker' in window)) {
+      notice('Для прямого сохранения файлов откройте страницу в актуальном Chrome или Edge.', 'error');
+    }
+  </script>
+</body>
+</html>
