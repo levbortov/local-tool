@@ -16,11 +16,14 @@
     }
     :root[data-theme="dark"] {
       color-scheme: dark;
-      --canvas:#101511; --surface:#1a211c; --surface-2:#1c251f; --ink:#e5ede5;
-      --muted:#97a59a; --line:#303e33; --hover:#27352b; --selected:#2c4835;
-      --accent:#9acda9; --accent-contrast:#142219; --warning:#edbc78; --error:#f4a5a0;
-      --scroll:#526658; --shadow:0 20px 65px rgba(0,0,0,.15);
+      /* Neutral graphite surfaces. Color is reserved for accents and status. */
+      --canvas:#151515; --surface:#1b1b1d; --surface-2:#222224; --ink:#ececef;
+      --muted:#a3a3aa; --line:#363639; --hover:#2d2d30; --selected:#38383c;
+      --accent:#98cfa8; --accent-contrast:#142019; --warning:#efb873; --error:#f19a9b;
+      --scroll:#5f5f65; --shadow:0 20px 65px rgba(0,0,0,.24);
     }
+    :root[data-theme="dark"] dialog::backdrop {background:rgba(0,0,0,.6);}
+    :root[data-theme="dark"] .scrim {background:rgba(0,0,0,.52);}
     * {box-sizing:border-box; scrollbar-color:var(--scroll) transparent; scrollbar-width:thin;}
     *::-webkit-scrollbar {width:9px; height:9px;}
     *::-webkit-scrollbar-thumb {background:var(--scroll); border:2px solid var(--surface); border-radius:999px;}
@@ -1120,6 +1123,7 @@
     });
     update();setBusy(false);
     if(!('showDirectoryPicker' in window))notice('Для работы с папками откройте редактор в Chrome или Edge.','error');
+    else if(location.protocol==='file:')notice('Запуск через file:// может ограничивать сохранение файлов. Рекомендуется открыть «Лист» через GitHub Pages (HTTPS).');
   </script>
 </body>
 </html>
