@@ -120,7 +120,11 @@
     .theme-menu label:hover {background:var(--hover);}
     .theme-menu input {margin:0; accent-color:var(--accent);}
     .save-btn {height:33px; border:1px solid var(--accent); background:var(--accent); color:var(--accent-contrast); padding:0 13px; border-radius:8px; font-size:11.5px; font-weight:650; white-space:nowrap;}
-    .save-btn:hover {filter:brightness(.95);}
+    .save-btn:hover:not(:disabled) {filter:brightness(.95);}
+    .workspace-access[hidden],.download-copy[hidden] {display:none!important;}
+    .workspace-access {color:var(--warning);}
+    .download-copy {flex:0 0 auto; border:1px solid var(--line); border-radius:7px; padding:5px 9px; font-size:11px; color:var(--ink); background:var(--surface); white-space:nowrap;}
+    .download-copy:hover {background:var(--hover);}
     .editor-wrap {flex:1 1 auto; min-height:0; min-width:0; display:flex; position:relative; overflow:hidden;}
     #editor {width:100%; height:100%; min-width:0; min-height:0; flex:1 1 auto; border:0; outline:0; resize:none; background:transparent; color:var(--ink); font:14px/1.9 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace; padding:34px clamp(20px,5vw,72px); tab-size:2; white-space:pre-wrap; overflow-wrap:anywhere; overflow-x:hidden; overflow-y:auto;}
     #editor::placeholder {color:var(--muted); opacity:.75;}
@@ -193,6 +197,9 @@
           <span class="workspace-label" id="workspaceLabel">Рабочий каталог</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
         </button>
+        <button class="icon-btn workspace-access" id="writeAccessBtn" type="button" title="Разрешить изменение файлов рабочей папки" aria-label="Разрешить запись" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+        </button>
           <div class="appearance">
             <button class="icon-btn appearance-toggle" id="themeBtn" type="button" title="Оформление" aria-label="Оформление" aria-haspopup="true" aria-expanded="false" aria-controls="themeMenu">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18Z" fill="currentColor" stroke="none"/></svg>
@@ -252,7 +259,7 @@
         </div>
       </header>
       <div class="editor-wrap"><textarea id="editor" wrap="soft" aria-label="Текст документа" spellcheck="false" autocapitalize="off" autocorrect="off" autocomplete="off" placeholder="Начните печатать или откройте текстовый файл…"></textarea></div>
-      <footer class="editor-foot"><span id="message" role="status" aria-live="polite">Файлы остаются на вашем компьютере</span><div class="editor-meta"><span id="lineCount">1 стр.</span><span id="wordCount">0 слов</span><span id="charCount">0 симв.</span><span class="save-indicator" id="saveState">Сохранено</span></div></footer>
+      <footer class="editor-foot"><span id="message" role="status" aria-live="polite">Файлы остаются на вашем компьютере</span><button id="downloadCopyBtn" class="download-copy" type="button" title="Скачать изменённый текст без прямой записи в исходный файл" hidden>Скачать копию</button><div class="editor-meta"><span id="lineCount">1 стр.</span><span id="wordCount">0 слов</span><span id="charCount">0 симв.</span><span class="save-indicator" id="saveState">Сохранено</span></div></footer>
     </section>
     <nav class="context-menu" id="contextMenu" aria-label="Действия с объектом" hidden>
       <button type="button" data-action="new-file">Новый файл</button><button type="button" data-action="new-folder">Новая папка</button><hr>
@@ -267,7 +274,7 @@
     const $ = id => document.getElementById(id);
     const shell = $('shell'), editor = $('editor'), tree = $('tree'), titleInput = $('documentName');
     const svgNS = 'http://www.w3.org/2000/svg';
-    const fileButtons = ['workspaceBtn','inlineChooseBtn','refreshBtn','foldersToggleBtn','sortBtn'];
+    const fileButtons = ['workspaceBtn','inlineChooseBtn','refreshBtn','foldersToggleBtn','sortBtn','writeAccessBtn'];
     const treeTools = new Set(['refreshBtn','foldersToggleBtn','sortBtn']);
     let root = null, selectedPath = null, selectedKind = null, activePath = null, currentHandle = null;
     let filename = 'Без названия.txt', savedText = '', eol = '\n', knownVersion = null;
@@ -286,14 +293,31 @@
     function validName(name) {return name && name !== '.' && name !== '..' && !/[\\/\u0000-\u001f<>:"|?*]/.test(name) && !/[. ]$/.test(name);}
     function notice(msg,type='') {
       clearTimeout(messageTimer); $('message').textContent=msg; $('message').className=type;
+      $('message').title=msg;
       if(type==='success')messageTimer=setTimeout(()=>notice('Файлы остаются на вашем компьютере'),6000);
     }
-    function showError(error) {
+    function showError(error,action='Операция') {
       if(isCancelled(error))return;
-      if(['NotAllowedError','SecurityError'].includes(error?.name))notice('Браузер не разрешил операцию. Проверьте доступ к папке.','error');
-      else notice('Ошибка: '+(error?.message||String(error)),'error');
-      console.error(error);
+      const code=error?.name||'Error',details=String(error?.message||'').slice(0,220);
+      if(['NotAllowedError','SecurityError'].includes(code)){
+        notice(action+': '+code+(details?' — '+details:'')+'. Проверьте разрешения браузера или корпоративную политику (chrome://policy).','error');
+      }else notice(action+': '+code+(details?' — '+details:''),'error');
+      console.error(action,error);
     }
+    function offerDownloadCopy(){ $('downloadCopyBtn').hidden=false; }
+    function permissionDenied(action){
+      const hasChanges=dirty();
+      notice(action+': браузер не предоставил право записи.'+(hasChanges?' Изменённый документ можно скачать отдельной копией.':'')+' На рабочем компьютере проверьте chrome://policy.','error');
+      if(hasChanges)offerDownloadCopy();
+    }
+    function downloadCopy(){
+      const blob=new Blob([editor.value.replace(/\n/g,eol)],{type:'text/plain;charset=utf-8'});
+      const url=URL.createObjectURL(blob),link=document.createElement('a');
+      link.href=url;link.download=filename||'Без названия.txt';document.body.append(link);link.click();link.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),15000);
+      notice('Копия подготовлена для скачивания. Исходный файл не изменён.','success');
+    }
+    $('downloadCopyBtn').addEventListener('click',downloadCopy);
     function requireApi(methods) {
       if(window.isSecureContext && methods.every(x=>typeof window[x]==='function'))return true;
       notice('Нужен актуальный Chrome/Edge и доступ к файловой системе.','error');return false;
@@ -552,6 +576,7 @@
     themeMenu.addEventListener('change',event=>{if(event.target.matches('input[name="theme"]')){setTheme(event.target.value);closeThemeMenu();currentThemeTrigger.focus();}});
     themeMedia.addEventListener('change',()=>{if(themeChoice==='system')applyTheme('system');});
     function resetDocument(){
+      $('downloadCopyBtn').hidden=true;
       currentHandle=null;activePath=null;filename='Без названия.txt';savedText='';eol='\n';knownVersion=null;
       editor.value='';resetHistory();update();syncSelection();
     }
@@ -561,6 +586,7 @@
       if(!skipWarnings&&file.size>10*1024*1024&&!confirm('Файл больше 10 МБ, редактор может замедлиться. Продолжить?'))return false;
       const raw=await file.text();
       if(!skipWarnings&&raw.includes('\0')&&!confirm('Похоже, это двоичный файл. Открыть его как текст?'))return false;
+      $('downloadCopyBtn').hidden=true;
       currentHandle=handle; activePath=path; filename=handle.name; eol=raw.includes('\r\n')?'\r\n':'\n';
       editor.value=raw; savedText=editor.value; knownVersion={size:file.size,lastModified:file.lastModified};
       resetHistory();
@@ -581,13 +607,23 @@
       catch(error){showError(error);}
     }
     async function save(saveAs=false){
-      if(busy||(!saveAs&&currentHandle&&!dirty())||!requireApi(['showSaveFilePicker']))return;
+      if(busy||(!saveAs&&currentHandle&&!dirty()))return;
+      // A previously opened file can be saved without showSaveFilePicker.
+      if((saveAs||!currentHandle)&&!requireApi(['showSaveFilePicker'])){
+        offerDownloadCopy();return;
+      }
       let target=currentHandle, created=false;
+      // Permission prompts must be initiated by this Save click, before reading
+      // metadata or awaiting other unrelated operations.
+      if(!saveAs&&target){
+        try{if(!(await ensureWritable(target))){permissionDenied('Сохранение');return;}}
+        catch(error){offerDownloadCopy();showError(error,'Запись в исходный файл');return;}
+      }
       if(saveAs||!target){
         try{const pending=window.showSaveFilePicker({id:'list-save',suggestedName:filename,
           types:[{description:'Текстовые файлы',accept:{'text/plain':['.txt','.md','.csv','.log','.json','.xml','.yaml','.yml']}}],
           ...(root?{startIn:root}:{})});target=await pending;created=true;}
-        catch(error){showError(error);return;}
+        catch(error){if(!isCancelled(error))offerDownloadCopy();showError(error,'Сохранение под другим именем');return;}
       }
       setBusy(true);const snapshot=editor.value;
       try{
@@ -607,9 +643,10 @@
           selectedPath=activePath;selectedKind=activePath?'file':null;
         }
         if(activePath){observedVersions.set(activePath,knownVersion);syncWarnings.delete(activePath);}
+        $('downloadCopyBtn').hidden=true;
         update();syncSelection();if(root)await refreshTree();
         notice(dirty()?'Сохранено; появились новые изменения.':'Файл сохранён на диске.','success');
-      }catch(error){if(activePath)syncWarnings.set(activePath,'error');updateSyncUI();showError(error);}finally{setBusy(false);}
+      }catch(error){if(activePath)syncWarnings.set(activePath,'error');updateSyncUI();offerDownloadCopy();showError(error,'Сохранение файла');}finally{setBusy(false);}
     }
     async function directoryAt(path=''){
       if(!root)throw new Error('Рабочая папка не выбрана');
@@ -630,14 +667,40 @@
         catch(error){if(!['NotFoundError','TypeMismatchError'].includes(error.name))throw error;}
       }return false;
     }
-    async function ensureWritable(){
-      if(!root)return false;
-      if(typeof root.queryPermission==='function'){
-        const p=await root.queryPermission({mode:'readwrite'});if(p==='granted')return true;
-        if(typeof root.requestPermission==='function')return(await root.requestPermission({mode:'readwrite'}))==='granted';
-        throw new DOMException('Нет доступа на запись','NotAllowedError');
-      }return true;
+    async function updateWriteAccessUI(){
+      const handle=root,button=$('writeAccessBtn');
+      if(!handle){button.hidden=true;return;}
+      let status='prompt';
+      try{if(typeof handle.queryPermission==='function')status=await handle.queryPermission({mode:'readwrite'});}
+      catch(error){console.warn('Нельзя определить разрешение на запись',error);}
+      if(root!==handle)return;
+      button.hidden=status==='granted';
+      button.title=status==='denied'?'Запись запрещена настройками браузера. Нажмите, чтобы повторить запрос.':'Разрешить редактирование файлов рабочей папки';
+      button.setAttribute('aria-label',button.title);
     }
+    async function ensureWritable(handle=root){
+      if(!handle)return false;
+      const opts={mode:'readwrite'};
+      try{
+        if(typeof handle.queryPermission==='function'){
+          const state=await handle.queryPermission(opts);
+          if(state==='granted')return true;
+        }
+        if(typeof handle.requestPermission==='function')return(await handle.requestPermission(opts))==='granted';
+        // Browsers implementing directory handles without permission methods
+        // may still guard individual mutations themselves.
+        return true;
+      }finally{
+        if(root)void updateWriteAccessUI();
+      }
+    }
+    $('writeAccessBtn').addEventListener('click',async()=>{
+      if(!root||busy)return;
+      try{
+        if(await ensureWritable(root))notice('Запись в рабочую директорию разрешена.','success');
+        else permissionDenied('Доступ к рабочей папке');
+      }catch(error){showError(error,'Запрос разрешения на запись');}
+    });
     async function reloadWorkspace(){
       if(!root)return;
       const version=++treeVersion;tree.replaceChildren();
@@ -779,21 +842,28 @@
         $('workspaceBtn').title=directory.name+' · сменить рабочую директорию';
         // Previously opened document stays visible, but its path no longer refers to this workspace.
         activePath=null;
-        await refreshTree();notice('Рабочая директория «'+directory.name+'» открыта.','success');
+        await refreshTree();await updateWriteAccessUI();
+        notice('Рабочая директория «'+directory.name+'» открыта. При необходимости разрешите запись значком замка.','success');
       }catch(error){showError(error);}finally{setBusy(false);}
     }
     async function chooseWorkspace(){
       if(busy||!requireApi(['showDirectoryPicker']))return;
-      try{const pending=window.showDirectoryPicker({id:'list-workspace',mode:'readwrite'});await activateWorkspace(await pending);}
-      catch(error){showError(error);}
+      try{
+        // Selecting a folder must not require write rights. Work-managed
+        // Chrome may permit reading while denying filesystem writes.
+        const pending=window.showDirectoryPicker({id:'list-workspace',mode:'read'});
+        await activateWorkspace(await pending);
+      }catch(error){showError(error,'Выбор рабочей папки');}
     }
     async function createFile(){
-      if(busy||!root||!maybeDiscard())return;
-      const destPath=selectedKind==='directory'?selectedPath:(selectedPath?parentPath(selectedPath):'');
-      const name=prompt('Название файла:', 'Новый документ.txt');if(name===null)return;
-      const value=name.trim();if(!validName(value))return notice('Недопустимое имя файла.','error');
+      if(busy||!root)return;
       setBusy(true);
-      try{if(!(await ensureWritable()))return notice('Доступ на запись не предоставлен.','error');
+      try{
+        if(!(await ensureWritable()))return permissionDenied('Создание файла');
+        if(!maybeDiscard())return;
+        const destPath=selectedKind==='directory'?selectedPath:(selectedPath?parentPath(selectedPath):'');
+        const name=prompt('Название файла:', 'Новый документ.txt');if(name===null)return;
+        const value=name.trim();if(!validName(value))return notice('Недопустимое имя файла.','error');
         const dir=await directoryAt(destPath);if(await entryExists(dir,value))return notice('Объект с таким именем уже существует.','error');
         const h=await dir.getFileHandle(value,{create:true});
         currentHandle=h;activePath=pathJoin(destPath,value);selectedPath=activePath;selectedKind='file';
@@ -804,11 +874,12 @@
     }
     async function createFolder(){
       if(busy||!root)return;
-      const destPath=selectedKind==='directory'?selectedPath:(selectedPath?parentPath(selectedPath):'');
-      const name=prompt('Название новой папки:', 'Новая папка');if(name===null)return;
-      const value=name.trim();if(!validName(value))return notice('Недопустимое имя папки.','error');
       setBusy(true);
-      try{if(!(await ensureWritable()))return notice('Доступ на запись не предоставлен.','error');
+      try{
+        if(!(await ensureWritable()))return permissionDenied('Создание папки');
+        const destPath=selectedKind==='directory'?selectedPath:(selectedPath?parentPath(selectedPath):'');
+        const name=prompt('Название новой папки:', 'Новая папка');if(name===null)return;
+        const value=name.trim();if(!validName(value))return notice('Недопустимое имя папки.','error');
         const dir=await directoryAt(destPath);if(await entryExists(dir,value))return notice('Объект с таким именем уже существует.','error');
         await dir.getDirectoryHandle(value,{create:true});if(destPath)expanded.add(destPath);
         selectedPath=pathJoin(destPath,value);selectedKind='directory';
@@ -843,7 +914,7 @@
         return notice('Нельзя переместить папку внутрь самой себя.','error'),false;
       setBusy(true);
       try{
-        if(!(await ensureWritable()))return notice('Доступ на запись не предоставлен.','error'),false;
+        if(!(await ensureWritable()))return permissionDenied('Перемещение'),false;
         const entry=await entryAt(src), destParent=await directoryAt(destination);
         if(entry.kind==='directory'&&(destination===src||destination.startsWith(src+'/')))
           return notice('Нельзя переместить папку внутрь самой себя.','error'),false;
@@ -868,6 +939,9 @@
     function destPathEquals(src,dest,name){return src===pathJoin(dest,name);}
     async function renameSelected(){
       if(busy||!selectedPath)return;
+      // Ask for write permission within the original click, before prompt().
+      try{if(!(await ensureWritable()))return permissionDenied('Переименование');}
+      catch(error){return showError(error,'Переименование');}
       const src=selectedPath;const proposed=prompt('Новое название:',basename(src));if(proposed===null)return;
       const newName=proposed.trim();
       await moveEntry(src,parentPath(src),newName);
@@ -877,10 +951,10 @@
       const src=selectedPath;
       if(activePath&&isInside(activePath,src)&&dirty())return notice('Сначала сохраните документ перед удалением.','error');
       const kind=selectedKind;
-      if(!confirm('Удалить '+(kind==='directory'?'папку со всем содержимым':'файл')+' «'+src+'»?\n\nОперация необратима: корзина не используется.'))return;
       setBusy(true);
       try{
-        if(!(await ensureWritable()))return notice('Доступ на запись не предоставлен.','error');
+        if(!(await ensureWritable()))return permissionDenied('Удаление');
+        if(!confirm('Удалить '+(kind==='directory'?'папку со всем содержимым':'файл')+' «'+src+'»?\n\nОперация необратима: корзина не используется.'))return;
         const entry=await entryAt(src);await entry.parent.removeEntry(entry.name,{recursive:entry.kind==='directory'});
         if(activePath&&isInside(activePath,src))resetDocument();
         for(const p of [...expanded])if(isInside(p,src))expanded.delete(p);
@@ -919,7 +993,9 @@
     async function moveSelected(){
       if(busy||!selectedPath)return;
       const source=selectedPath;
-      try{const target=await askDestination(source);if(target===null)return;
+      try{
+        if(!(await ensureWritable()))return permissionDenied('Перемещение');
+        const target=await askDestination(source);if(target===null)return;
         if(destPathEquals(source,target,basename(source)))return notice('Файл уже находится в выбранной папке.');
         await moveEntry(source,target);
       }catch(error){showError(error);}
