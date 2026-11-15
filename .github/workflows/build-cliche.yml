@@ -1,0 +1,43 @@
+name: Build Cliche standalone HTML
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/cliche/app/**'
+      - '.github/workflows/build-cliche.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tools/cliche/app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Test parser
+        run: npm test
+      - name: Check Svelte and TypeScript
+        run: npm run check
+      - name: Build standalone HTML
+        run: npm run build
+      - name: Publish compiled HTML into repository
+        run: |
+          cp dist/index.html ../index.html
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ../index.html
+          if ! git diff --cached --quiet; then
+            git commit -m "build(cliche): обновить автономный HTML [skip ci]"
+            git push
+          fi
