@@ -8,6 +8,10 @@ on:
       - '.github/workflows/build-cliche.yml'
   workflow_dispatch:
 
+concurrency:
+  group: cliche-build-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: write
 
