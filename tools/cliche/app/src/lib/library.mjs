@@ -89,7 +89,7 @@ export function pathUnder(path, folder) { return !folder || path.startsWith(fold
 
 /** webkitRelativePath does not expose an absolute directory path. */
 export function buildLibrary(entries) {
-  const sorted = [...entries].sort((a,b) => byName(a.path,b.path));
+  const sorted = [...entries].sort((a,b) => Number(a.path.includes('/')) - Number(b.path.includes('/')) || byName(a.path,b.path));
   const folders = new Set(['']);
   const files = [];
   for (const entry of sorted) {
