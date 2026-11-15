@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseMessages, normalizeSearch, relevance, buildLibrary, pathUnder } from '../src/lib/library.mjs';
+import { parseMessages, normalizeSearch, relevance, buildLibrary, pathUnder, readSelectedFiles } from '../src/lib/library.mjs';
 
 test('legacy format: titles, #tags, # spaced tags, raw message', () => {
   const cards = parseMessages('[Заголовок #тег # тег2 #тег]\r\nСодержимое первой отписки\r\n\r\n[ #Тег ]\r\nВторая\r\n\r\nТретья без заголовка', 'main.txt');
@@ -42,4 +42,15 @@ test('folder grouping, nested filtering',()=>{
   assert.equal(lib.total,2);
   assert.ok(pathUnder('A/B/b.txt','A'));
   assert.equal(pathUnder('A/B/b.txt','C'),false);
+});
+test('directory input reconstructs nested files without File System Access API', async () => {
+  const root = new File(['[Привет #тест]\nТекст'], 'a.txt', { type: 'text/plain' });
+  Object.defineProperty(root, 'webkitRelativePath', { value: 'Библиотека/a.txt' });
+  const nested = new File(['Заявка обработана'], 'b.txt', { type: 'text/plain' });
+  Object.defineProperty(nested, 'webkitRelativePath', { value: 'Библиотека/Платежи/b.txt' });
+  const result = await readSelectedFiles([nested, root]);
+  assert.equal(result.folderName, 'Библиотека');
+  assert.deepEqual(result.files.map(file=>file.path), ['a.txt','Платежи/b.txt']);
+  assert.equal(result.total,2);
+  assert.deepEqual(result.skipped,[]);
 });
