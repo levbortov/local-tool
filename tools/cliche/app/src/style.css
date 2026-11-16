@@ -79,6 +79,8 @@ button:focus-visible,input:focus-visible,select:focus-visible,[role="button"]:fo
 .copied .card-symbol{color:var(--accent)}
 .reply-preview{flex:1;min-width:40px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:570}
 .tag-strip{display:flex;flex:0 1 auto;min-width:0;max-width:46%;overflow:hidden;gap:4px;white-space:nowrap}
+.reply-card.expanded .reply-row{flex-wrap:wrap}
+.reply-card.expanded .tag-strip{order:3;flex:0 0 auto;max-width:calc(100% - 25px);margin-left:23px;overflow:visible;white-space:normal;flex-wrap:wrap}
 .tag{border:1px solid var(--border);background:var(--tag-bg);color:var(--tag-text);border-radius:5px;padding:4px 6px;font-size:10px;line-height:1.15;white-space:nowrap;flex:0 0 auto}
 .tag:hover{border-color:var(--accent);color:var(--accent)}
 .reply-actions{display:flex;align-items:center;flex:0 0 auto;gap:1px}
