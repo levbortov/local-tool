@@ -23,6 +23,7 @@
   let showFavorites = $state(false);
   let sidebarOpen = $state(false);
   let sidebarCollapsed = $state(false);
+  let sidebarWidth = $state(272);
   let loading = $state(false);
   let toast = $state('');
   let copiedId = $state('');
@@ -63,6 +64,8 @@
   onMount(() => {
     theme = readStored('theme', 'system');
     layout = readStored('layout', 'grid');
+    const savedWidth = Number(readStored('sidebarWidth', 272));
+    sidebarWidth = Number.isFinite(savedWidth) ? Math.min(480, Math.max(190, savedWidth)) : 272;
     const motion = window.matchMedia('(prefers-color-scheme: dark)');
     const apply = () => { document.documentElement.dataset.theme = theme === 'system' ? (motion.matches ? 'dark' : 'light') : theme; };
     motion.addEventListener('change', apply);
@@ -89,6 +92,33 @@
     if (!store('layout',layout)) notify('Не удалось сохранить настройки браузера');
   }
   function pickFolder() { folderInput?.click(); }
+  function revealSidebar() { sidebarCollapsed = false; sidebarOpen = true; }
+  function hideSidebar() { sidebarOpen = false; sidebarCollapsed = true; }
+  function resizeSidebar(event: PointerEvent) {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    const originalX = event.clientX;
+    const originalWidth = sidebarWidth;
+    document.documentElement.classList.add('resizing-sidebar');
+    const move = (e: PointerEvent) => { sidebarWidth = Math.min(480, Math.max(190, originalWidth + e.clientX - originalX)); };
+    const stop = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', stop);
+      window.removeEventListener('pointercancel', stop);
+      document.documentElement.classList.remove('resizing-sidebar');
+      store('sidebarWidth', sidebarWidth);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', stop);
+    window.addEventListener('pointercancel', stop);
+  }
+  function resizeSidebarWithKeyboard(event: KeyboardEvent) {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+    event.preventDefault();
+    sidebarWidth = Math.min(480, Math.max(190, sidebarWidth + (event.key === 'ArrowRight' ? 12 : -12)));
+    store('sidebarWidth', sidebarWidth);
+  }
+  function navigateTag(tag: string) { search = '#' + tag; scope = 'all'; showFavorites = false; sidebarOpen = false; }
   async function loadFolder(event: Event) {
     const target = event.currentTarget as HTMLInputElement;
     const list = target.files;
@@ -109,7 +139,7 @@
       showFavorites = false;
       sidebarOpen = false;
       favorites = new Set(readStored(favoriteKey(incoming.folderName), []));
-      notify(`${incoming.total} сообщений · ${incoming.files.length} тематик${incoming.skipped.length ? ` · пропущено файлов: ${incoming.skipped.length}` : ''}`);
+      if (incoming.skipped.length) notify(`Пропущено файлов: ${incoming.skipped.length}`);
     } catch(error) {
       notify('Не удалось прочитать папку: ' + (error instanceof Error ? error.message : String(error)));
     } finally { loading = false; target.value = ''; }
@@ -168,109 +198,79 @@
 </script>
 
 <input class="hidden-file-input" aria-label="Выбрать рабочую директорию" type="file" webkitdirectory multiple bind:this={folderInput} onchange={loadFolder}/>
-<div class="app-shell" class:sidebar-collapsed={sidebarCollapsed}>
-  <header class="app-header">
-    <div class="brand-group">
-      {#if library}
-        <button class="icon-button sidebar-menu" type="button" title="Показать каталоги" aria-label="Показать каталоги" onclick={() => { sidebarOpen = !sidebarOpen; sidebarCollapsed = false; }}><Icon name="panel" size={19}/></button>
-      {/if}
-      <div class="brand-mark"><Icon name="spark" size={20}/></div>
-      <div class="brand-text"><span class="brand-name">Клише</span><span class="brand-divider">/</span><span class="brand-subtitle">библиотека ответов</span></div>
-    </div>
-    <div class="header-actions">
-      {#if library}
-        <button class="icon-button favorites-toggle" class:active={showFavorites} type="button" aria-label="Показать избранное" aria-pressed={showFavorites} title="Избранное" onclick={() => {showFavorites = !showFavorites;sidebarOpen = false;}}><Icon name="star" size={19} filled={showFavorites}/></button>
-      {/if}
-      <button class="icon-button" type="button" aria-label="Сменить оформление" title={`Тема: ${theme === 'system' ? 'системная' : theme === 'dark' ? 'тёмная' : 'светлая'}`} onclick={toggleTheme}><Icon name={theme === 'dark' ? 'moon' : theme === 'light' ? 'sun' : 'settings'} size={19}/></button>
-      <span class="header-separator"></span>
-      <button class="header-folder-button" type="button" disabled={loading} onclick={pickFolder}><Icon name="folder-open" size={17}/><span>{library ? 'Сменить папку' : 'Открыть папку'}</span></button>
-    </div>
-  </header>
-
+<div class="app-shell" class:sidebar-collapsed={sidebarCollapsed} style={`--sidebar-width:${sidebarWidth}px`}>
   {#if !library}
     <main class="welcome-panel">
-      <div class="welcome-icon"><Icon name="folder-open" size={30}/></div>
-      <span class="eyebrow">ЛОКАЛЬНАЯ БИБЛИОТЕКА</span>
-      <h1>Нужный ответ.<br/><span>В один клик.</span></h1>
-      <p>Выбери папку с готовыми сообщениями. «Клише» соберёт их в удобную библиотеку, поможет найти нужное и скопировать его без заголовков и тегов.</p>
-      <button class="primary-button" type="button" disabled={loading} onclick={pickFolder}><Icon name="folder" size={18}/>{loading ? 'Читаем папку…' : 'Выбрать рабочую папку'}<span class="button-arrow">↗</span></button>
-      <div class="welcome-points"><span><Icon name="check" size={14}/> Без сервера</span><span><Icon name="check" size={14}/> Без загрузки файлов в сеть</span><span><Icon name="check" size={14}/> Работает офлайн</span></div>
-      <div class="welcome-example"><span class="example-label">ПРИМЕР ЗАПИСИ</span><code>[Проверка платежа #платёж #проверка]<br/>Ваш платёж сейчас находится в обработке.</code><span class="example-description">Пустая строка разделяет сообщения. Заголовки и теги необязательны.</span></div>
+      <div class="welcome-icon"><Icon name="spark" size={25}/></div>
+      <h1>Клише</h1>
+      <button class="primary-button" type="button" disabled={loading} onclick={pickFolder}><Icon name="folder-open" size={18}/>{loading ? 'Загрузка…' : 'Выбрать папку'}</button>
     </main>
   {:else}
     <div class="workspace">
-      {#if sidebarOpen}<button class="mobile-scrim" type="button" aria-label="Закрыть проводник" onclick={() => sidebarOpen = false}></button>{/if}
+      {#if sidebarOpen}<button class="mobile-scrim" type="button" aria-label="Закрыть панель каталогов" onclick={() => sidebarOpen = false}></button>{/if}
       <aside class="sidebar" class:sidebar-open={sidebarOpen} aria-label="Каталоги библиотеки">
-        <div class="sidebar-header">
-          <span class="section-overline">РАБОЧАЯ ПАПКА</span>
-          <div class="directory-title"><Icon name="folder-open" size={18}/><span title={library.folderName}>{library.folderName}</span></div>
+        <div class="sidebar-tools">
+          <button class="icon-button" type="button" aria-label="Скрыть панель каталогов" onclick={hideSidebar}><Icon name="panel" size={18}/></button>
+          <div class="tools-spacer"></div>
+          <button class="icon-button" class:active={showFavorites} type="button" aria-label="Избранное" aria-pressed={showFavorites} onclick={() => {showFavorites = !showFavorites; sidebarOpen = false;}}><Icon name="star" size={18} filled={showFavorites}/></button>
+          <button class="icon-button" type="button" aria-label="Сменить тему" onclick={toggleTheme}><Icon name={theme === 'dark' ? 'moon' : theme === 'light' ? 'sun' : 'settings'} size={18}/></button>
+          <button class="icon-button" type="button" aria-label="Сменить вид карточек" onclick={toggleLayout}><Icon name={layout === 'grid' ? 'list' : 'grid'} size={18}/></button>
         </div>
-        <div class="tree-heading"><span>КАТАЛОГИ</span><span>{Math.max(0,library.directories.length - 1)}</span></div>
-        <nav class="directory-tree" aria-label="Структура каталогов">
+        <nav class="directory-tree" aria-label="Каталоги">
           {#each visibleFolders as folder (folder)}
-            <div class="folder-row" class:selected={selectedFolder === folder && !showFavorites} style={`padding-left: ${12 + folder.split('/').filter(Boolean).length * 14}px`}>
+            <div class="folder-row" class:selected={selectedFolder === folder && !showFavorites} class:root-row={!folder} style={`padding-left: ${8 + folder.split('/').filter(Boolean).length * 14}px`}>
               {#if hasChildren(folder)}
                 <button class="folder-expand" type="button" aria-label={expandedFolders.has(folder) ? 'Свернуть каталог' : 'Развернуть каталог'} aria-expanded={expandedFolders.has(folder)} onclick={() => toggleFolder(folder)}><Icon name={expandedFolders.has(folder) ? 'chevron-down' : 'chevron-right'} size={15}/></button>
               {:else}<span class="folder-spacer"></span>{/if}
-              <button class="folder-label" type="button" onclick={() => chooseFolder(folder)} title={folder || library.folderName} aria-current={selectedFolder === folder && !showFavorites ? 'page' : undefined}><Icon name={selectedFolder === folder ? 'folder-open' : 'folder'} size={17}/><span>{folder ? folder.split('/').at(-1) : 'Все файлы в корне'}</span></button>
+              <button class="folder-label" type="button" onclick={() => chooseFolder(folder)} aria-current={selectedFolder === folder && !showFavorites ? 'page' : undefined}><span>{folder ? folder.split('/').at(-1) : library.folderName}</span></button>
+              {#if !folder}
+                <button class="folder-action" type="button" disabled={loading} aria-label="Обновить папку: выбрать её повторно" onclick={pickFolder}><Icon name="refresh" size={15}/></button>
+                <button class="folder-action" type="button" disabled={loading} aria-label="Выбрать другую рабочую папку" onclick={pickFolder}><Icon name="folder-open" size={15}/></button>
+              {/if}
             </div>
           {/each}
         </nav>
-        <div class="sidebar-footer">
-          <div class="sidebar-stats"><span class="status-dot"></span>{library.total} ответов · {library.files.length} тематик</div>
-          <span class="footer-note">Только чтение · локально</span>
-        </div>
       </aside>
+      <div class="sidebar-resizer" role="separator" aria-label="Ширина панели каталогов" aria-orientation="vertical" aria-valuemin="190" aria-valuemax="480" aria-valuenow={sidebarWidth} tabindex="0" onpointerdown={resizeSidebar} onkeydown={resizeSidebarWithKeyboard}></div>
       <section class="main-panel" aria-label="Сообщения">
-        <div class="topicbar">
-          {#if !showFavorites}
-            <div class="topicbar-title"><span>{selectedFolder ? selectedFolder.split('/').at(-1) : library.folderName}</span><span class="topicbar-breadcrumb">/ тематики</span></div>
-          {:else}
-            <div class="topicbar-title"><Icon name="star" size={17} filled={true}/><span>Избранное</span></div>
-          {/if}
-          <div class="topicbar-right"><span>{showFavorites ? favorites.size : directFiles.length} {showFavorites ? 'избранных' : 'файлов'}</span></div>
-        </div>
-        {#if !showFavorites}
-          <Tabs.Root bind:value={selectedFile} class="tab-root">
+        <Tabs.Root bind:value={selectedFile} class="tab-root">
+          <div class="tabs-shell">
+            <button class="icon-button sidebar-reveal" type="button" aria-label="Показать панель каталогов" onclick={revealSidebar}><Icon name="panel" size={18}/></button>
             <Tabs.List class="topic-tabs" aria-label="Тематики">
-              {#each directFiles as topic (topic.path)}
-                <Tabs.Trigger value={topic.path} class="topic-tab" title={topic.name}><Icon name="file" size={15}/><span>{topic.name.replace(/\.[^.]+$/, '')}</span></Tabs.Trigger>
-              {/each}
-              {#if directFiles.length === 0}<span class="tabs-empty">В этом каталоге нет файлов. Выбери вложенный каталог или воспользуйся поиском.</span>{/if}
-            </Tabs.List>
-            <div class="content-toolbar">
-              <div class="search-wrap"><Icon name="search" size={18}/><input bind:this={searchInput} type="search" bind:value={search} placeholder="Поиск по тексту, заголовкам и тегам…" aria-label="Поиск по сообщениям"/><kbd>/</kbd></div>
-              <label class="scope-wrap"><span class="visually-hidden">Область поиска</span><select bind:value={scope} aria-label="Область поиска"><option value="all">Вся библиотека</option><option value="folder">Каталог</option><option value="file">Тематика</option></select></label>
-              <button class="icon-button layout-button" type="button" aria-label={layout === 'grid' ? 'Показать списком' : 'Показать сеткой'} title={layout === 'grid' ? 'Список' : 'Сетка'} onclick={toggleLayout}><Icon name={layout === 'grid' ? 'list' : 'grid'} size={19}/></button>
-            </div>
-            <div class="cards-scroll">
-              <div class="results-heading"><div><h2>{isSearching ? 'Результаты поиска' : activeFile?.name.replace(/\.[^.]+$/, '') || 'Нет тематики'}</h2><p>{isSearching ? `По запросу «${search.trim()}»` : activeFile ? 'Нажми на карточку, чтобы скопировать её текст' : 'Выбери тематику в каталоге'}</p></div><span class="results-count">{filtered.length} сообщений</span></div>
-              {#if filtered.length}
-                <div class="reply-grid" class:list-layout={layout === 'list'}>
-                  {#each filtered as item (item.id)}
-                    <ReplyCard {item} expanded={expandedCards.has(item.id)} starred={favorites.has(item.id)} copied={copiedId === item.id} showLocation={showingLocation} onCopy={copy} onExpand={toggleCard} onStar={toggleFavorite}/>
-                  {/each}
-                </div>
+              {#if showFavorites}
+                <div class="topic-tab is-current"><Icon name="star" size={15} filled={true}/><span>Избранное</span></div>
               {:else}
-                <div class="empty-results"><div class="empty-mark"><Icon name={isSearching ? 'search' : 'file'} size={25}/></div><h3>{isSearching ? 'Ничего не найдено' : 'Здесь пока пусто'}</h3><p>{isSearching ? 'Попробуй другой запрос или измени область поиска.' : 'Выбери каталог с файлами или открой другую рабочую папку.'}</p></div>
+                {#each directFiles as topic (topic.path)}
+                  <Tabs.Trigger value={topic.path} class="topic-tab"><span>{topic.name.replace(/\.[^.]+$/, '')}</span></Tabs.Trigger>
+                {/each}
               {/if}
-            </div>
-          </Tabs.Root>
-        {:else}
+            </Tabs.List>
+          </div>
           <div class="content-toolbar">
-            <div class="search-wrap"><Icon name="search" size={18}/><input bind:this={searchInput} type="search" bind:value={search} placeholder="Поиск по избранному…" aria-label="Поиск по избранному"/><kbd>/</kbd></div>
-            <label class="scope-wrap"><span class="visually-hidden">Область поиска</span><select bind:value={scope}><option value="all">Вся библиотека</option><option value="folder">Каталог</option><option value="file">Тематика</option></select></label>
-            <button class="icon-button layout-button" type="button" aria-label="Переключить раскладку" onclick={toggleLayout}><Icon name={layout === 'grid' ? 'list' : 'grid'} size={19}/></button>
+            <div class="search-wrap"><Icon name="search" size={17}/><input bind:this={searchInput} type="search" bind:value={search} placeholder="Поиск" aria-label="Поиск по сообщениям"/></div>
+            <select class="scope-select" bind:value={scope} aria-label="Область поиска">
+              <option value="all">Везде</option>
+              <option value="folder">Каталог</option>
+              <option value="file">Файл</option>
+            </select>
           </div>
-          <div class="cards-scroll"><div class="results-heading"><div><h2>Избранные ответы</h2><p>Отписки, которые ты отметил звездой</p></div><span class="results-count">{filtered.length} сообщений</span></div>
-            {#if filtered.length}<div class="reply-grid" class:list-layout={layout === 'list'}>{#each filtered as item (item.id)}<ReplyCard {item} expanded={expandedCards.has(item.id)} starred={favorites.has(item.id)} copied={copiedId === item.id} showLocation={true} onCopy={copy} onExpand={toggleCard} onStar={toggleFavorite}/>{/each}</div>
-            {:else}<div class="empty-results"><div class="empty-mark"><Icon name="star" size={25}/></div><h3>Здесь пока пусто</h3><p>Нажми на звезду рядом с нужной отпиской, чтобы она появилась здесь.</p></div>{/if}
+          <div class="cards-scroll">
+            {#if filtered.length}
+              <div class="reply-grid" class:list-layout={layout === 'list'}>
+                {#each filtered as item (item.id)}
+                  <ReplyCard {item} expanded={expandedCards.has(item.id)} starred={favorites.has(item.id)} copied={copiedId === item.id} showLocation={showingLocation} onCopy={copy} onExpand={toggleCard} onStar={toggleFavorite} onTag={navigateTag}/>
+                {/each}
+              </div>
+            {:else}
+              <div class="empty-results">{isSearching ? 'Нет совпадений' : showFavorites ? 'Нет избранных' : 'Нет сообщений'}</div>
+            {/if}
           </div>
-        {/if}
+          <footer class="main-meta"><span>{filtered.length} / {library.total}</span><span>{library.files.length} файлов</span></footer>
+        </Tabs.Root>
       </section>
     </div>
   {/if}
-  {#if toast}<div class="toast" role="status" aria-live="polite"><Icon name="info" size={17}/>{toast}</div>{/if}
+  {#if toast}<div class="toast" role="status" aria-live="polite">{toast}</div>{/if}
 </div>
 <svelte:window onkeydown={(event) => {
   const target = event.target as HTMLElement;
