@@ -13,6 +13,7 @@
   {:else if name === 'grid'}<rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/>
   {:else if name === 'moon'}<path d="M20 16a8 8 0 0 1-12-12 8 8 0 1 0 12 12"/>
   {:else if name === 'sun'}<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
+  {:else if name === 'refresh'}<path d="M20 7v5h-5M4 17v-5h5"/><path d="M6.3 9a7 7 0 0 1 12.3-1.6L20 12M4 12l1.4 4.6A7 7 0 0 0 17.7 15"/>
   {:else if name === 'upload'}<path d="M12 16V3m-5 5 5-5 5 5M4 15v5h16v-5"/>
   {:else if name === 'copy'}<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/>
   {:else if name === 'check'}<path d="m4.5 12 5 5 10-11"/>
