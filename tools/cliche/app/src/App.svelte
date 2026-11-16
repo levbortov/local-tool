@@ -129,12 +129,14 @@
       if (!incoming.files.length) { notify('В этой папке не найдены сообщения в текстовых файлах'); return; }
       const sameFolder = library?.folderName === incoming.folderName;
       const previousFile = selectedFile;
+      const previousFolder = selectedFolder;
       const previousExpanded = new Set(expandedCards);
       library = incoming;
       const rootFile = incoming.files.find(file => !parent(file.path));
       const first = rootFile ?? incoming.files[0];
-      selectedFile = sameFolder && incoming.files.some(file => file.path === previousFile) ? previousFile : first.path;
-      selectedFolder = parent(selectedFile);
+      selectedFolder = sameFolder && incoming.directories.includes(previousFolder) ? previousFolder : parent(first.path);
+      selectedFile = sameFolder && incoming.files.some(file => file.path === previousFile && parent(file.path) === selectedFolder)
+        ? previousFile : (incoming.files.find(file => parent(file.path) === selectedFolder)?.path ?? '');
       expandedFolders = sameFolder
         ? new Set([...expandedFolders].filter(folder => incoming.directories.includes(folder)))
         : new Set(['', ...selectedFolder.split('/').map((_,i)=>selectedFolder.split('/').slice(0,i+1).join('/'))]);
