@@ -127,16 +127,20 @@
     try {
       const incoming: Library = await readSelectedFiles(list);
       if (!incoming.files.length) { notify('В этой папке не найдены сообщения в текстовых файлах'); return; }
+      const sameFolder = library?.folderName === incoming.folderName;
+      const previousFile = selectedFile;
+      const previousExpanded = new Set(expandedCards);
       library = incoming;
       const rootFile = incoming.files.find(file => !parent(file.path));
       const first = rootFile ?? incoming.files[0];
-      selectedFile = first.path;
-      selectedFolder = parent(first.path);
-      expandedFolders = new Set(['', ...selectedFolder.split('/').map((_,i)=>selectedFolder.split('/').slice(0,i+1).join('/'))]);
-      expandedCards = new Set();
-      search = '';
-      scope = 'all';
-      showFavorites = false;
+      selectedFile = sameFolder && incoming.files.some(file => file.path === previousFile) ? previousFile : first.path;
+      selectedFolder = parent(selectedFile);
+      expandedFolders = sameFolder
+        ? new Set([...expandedFolders].filter(folder => incoming.directories.includes(folder)))
+        : new Set(['', ...selectedFolder.split('/').map((_,i)=>selectedFolder.split('/').slice(0,i+1).join('/'))]);
+      expandedFolders.add('');
+      expandedCards = sameFolder ? new Set([...previousExpanded].filter(id => incoming.files.some(file => file.messages.some(message => message.id === id)))) : new Set();
+      if (!sameFolder) { search = ''; scope = 'all'; showFavorites = false; }
       sidebarOpen = false;
       favorites = new Set(readStored(favoriteKey(incoming.folderName), []));
       if (incoming.skipped.length) notify(`Пропущено файлов: ${incoming.skipped.length}`);
